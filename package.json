@@ -1,0 +1,17 @@
+{
+  "name": "banda-virtual",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Composer agent + WebXR virtual band. POC for a conference publication. See README.md and AGENTS.md.",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'Sprint 0 not done yet. See docs/workflow.md.' && exit 1",
+    "build": "echo 'Sprint 0 not done yet. See docs/workflow.md.' && exit 1",
+    "preview": "echo 'Sprint 0 not done yet. See docs/workflow.md.' && exit 1",
+    "typecheck": "echo 'Sprint 0 not done yet. See docs/workflow.md.' && exit 1"
+  },
+  "packageManager": "pnpm@9",
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md",
+    "docs/architecture.md",
+    "docs/requirements.md"
+  ],
+  "model": "openrouter/anthropic/claude-sonnet-4.6",
+  "provider": {
+    "openrouter": {
+      "options": {
+        "apiKey": "{env:OPENROUTER_API_KEY}",
+        "headers": {
+          "HTTP-Referer": "https://github.com/banda-virtual",
+          "X-Title": "banda-virtual-opencode"
+        }
+      }
+    }
+  },
+  "tools": {
+    "edit": true,
+    "write": true,
+    "bash": true,
+    "read": true,
+    "grep": true,
+    "glob": true
+  },
+  "permissions": {
+    "bash": {
+      "pnpm install *": "allow",
+      "pnpm tsc *": "allow",
+      "pnpm dev *": "allow",
+      "pnpm build *": "allow",
+      "pnpm preview *": "allow",
+      "git status": "allow",
+      "git diff *": "allow",
+      "git log *": "allow",
+      "rm *": "ask",
+      "rm -rf *": "deny",
+      "git push *": "ask",
+      "git reset --hard *": "ask"
+    }
+  }
+}
