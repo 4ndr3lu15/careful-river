@@ -52,7 +52,7 @@ export function App() {
         onPromptChange={setPrompt}
         onCompose={handleCompose}
       />
-      <MusicianPanel />
+      <MusicianPanel code={code} />
     </main>
   );
 }

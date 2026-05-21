@@ -1,28 +1,28 @@
 /**
- * MusicianPanel — Sprint 2 dev harness for the `musician/` module.
+ * MusicianPanel — Play/Stop controls for the `musician/` runtime.
  *
- * Initialises `@strudel/web` at mount, then exposes Play / Stop plus an
- * editable code field (pre-filled with a test pattern) and the dev EventLog.
- * Together they satisfy Sprint 2's "Done when": Play produces audio and the
- * EventLog fills with coherent timestamps.
+ * Initialises `@strudel/web` at mount, then plays whatever Strudel `code` the
+ * composer produced. Together with the dev EventLog this satisfies Sprint 2's
+ * "Done when": Play produces audio and the EventLog fills with coherent
+ * timestamps.
  *
- * INTEGRATION NOTE (parallel branches): this panel owns its own `code` so
- * Sprint 2 is verifiable without the composer. When Sprint 1 (composer)
- * merges, `App.tsx` should own `code` and pass it down as a prop — at which
- * point the textarea here becomes read-only or is dropped.
+ * The Strudel pattern is owned by `App` (sourced from the composer) and passed
+ * in as a prop — the panel has no editor of its own; `ComposerPanel` already
+ * displays the generated code.
  */
 import { useEffect, useState } from 'react';
 import { init, play, stop } from '../musician';
 import { EventLog } from './EventLog';
 
-/** Uses only samples the cheatsheet lists as always present. */
-const DEFAULT_CODE = 's("bd ~ sd ~, hh*8")';
-
 type Status = 'loading' | 'ready' | 'playing' | 'error';
 
-export function MusicianPanel() {
+interface MusicianPanelProps {
+  /** Strudel code from the composer; `null` until the first successful compose. */
+  code: string | null;
+}
+
+export function MusicianPanel({ code }: MusicianPanelProps) {
   const [status, setStatus] = useState<Status>('loading');
-  const [code, setCode] = useState(DEFAULT_CODE);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,6 +40,7 @@ export function MusicianPanel() {
   }, []);
 
   const handlePlay = async () => {
+    if (!code) return;
     try {
       await play(code);
       setStatus('playing');
@@ -65,23 +66,14 @@ export function MusicianPanel() {
         </span>
       </h2>
 
-      <textarea
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        spellCheck={false}
-        rows={3}
-        style={{
-          display: 'block',
-          width: '100%',
-          maxWidth: '40rem',
-          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-          fontSize: '0.85rem',
-          padding: '0.5rem',
-        }}
-      />
+      {code ? null : (
+        <p style={{ margin: '0 0 0.5rem', opacity: 0.6, fontSize: '0.9rem' }}>
+          Compose a pattern above, then press Play.
+        </p>
+      )}
 
       <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
-        <button type="button" onClick={handlePlay} disabled={busy}>
+        <button type="button" onClick={handlePlay} disabled={busy || !code}>
           {busy ? 'Loading…' : '▶ Play'}
         </button>
         <button type="button" onClick={handleStop} disabled={busy}>
