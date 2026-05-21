@@ -31,6 +31,7 @@ antigravity
 - Antigravity relies heavily on its own persistent workspace state located at `~/.gemini/antigravity-cli/brain/`. Its plans and walkthroughs will live outside the repo tree as artifacts.
 - Antigravity will NOT execute bash commands directly without user approval unless pre-approved (like Claude Code). It uses the `run_command` tool which requires interaction.
 - Does not natively read `.claude/skills/` without manual reading.
+- **Coauthoring**: When creating git commits, append a `Co-authored-by: Antigravity <antigravity@gemini.local>` trailer to the commit message to reflect the pair-programming session.
 
 ## Sprint fit
 
