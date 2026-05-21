@@ -87,6 +87,7 @@ This repo is meant to be navigated by several coding-agent CLIs. The convention:
 
 - **Universal**: any agent reads `AGENTS.md` first.
 - **Tool-specific deltas** (only what differs from this file) live in:
+  - `ANTIGRAVITY.md` — Antigravity CLI (also uses artifacts in its `brain/` directory)
   - `CLAUDE.md` — Claude Code (also reads `.claude/skills/` and `.mcp.json`)
   - `GEMINI.md` — Gemini CLI
   - `.github/copilot-instructions.md` — GitHub Copilot (CLI + IDE)

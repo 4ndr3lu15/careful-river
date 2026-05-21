@@ -128,6 +128,7 @@ You have multiple CLIs. Use the right one per task; none of them is "the best at
 
 | Tool | Best at | Worst at | Invoke |
 |---|---|---|---|
+| **Antigravity** (`antigravity`) | Deep orchestration, multi-file planning, background research (`research` subagent), `/grill-me` alignment | Quick single-line edits | `antigravity` in repo root |
 | **Claude Code** (`claude`) | Multi-file refactors, planning, deep reasoning, tool-using tasks, this project's primary | Quick single-line edits | `claude` in repo root |
 | **Gemini CLI** (`gemini`) | Massive context (1M+ tokens) — paste an entire module to discuss; cheap exploration | Multi-file editing flow | `gemini` in repo root |
 | **GitHub Copilot CLI** (`gh copilot`) | Quick shell command suggestions; PR descriptions | Project-level architectural work | `gh copilot suggest "..."` |
@@ -141,7 +142,7 @@ Suggested mapping to sprints:
 - Sprint 1 (composer): **Claude Code** for the architecture, **Gemini CLI** to discuss the system prompt with full Strudel docs pasted in.
 - Sprint 2 (musician): **Claude Code** — needs to read multiple Strudel sources and synthesize.
 - Sprint 3 (scene): **Aider** or **Cursor** — small, well-scoped per-component edits.
-- Sprint 4 (sync): **Claude Code** — this sprint is the brain of the project.
+- Sprint 4 (sync): **Antigravity** or **Claude Code** — this sprint is the brain of the project. Use Antigravity to plan (`/grill-me`) and manage the overall orchestrator tasks.
 - Sprint 5 (XR): **Claude Code** + Aider for follow-ups.
 - Sprint 6 (polish): mix; **gh copilot** for one-liners and PR descriptions.
 
