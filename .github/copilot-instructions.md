@@ -1,26 +1,40 @@
 # GitHub Copilot — project instructions
 
-The canonical project rules live in **`AGENTS.md`** at the repository root. Always read it first. This file adds only Copilot-specific guidance.
+The canonical project rules live in **`AGENTS.md`** at the repository root. Always read it first; this file is the Copilot-specific delta.
 
-## Tone of completions
+This repo is currently in **planning / Sprint 0**: there is no application code yet. Use `docs/workflow.md` to drive the bootstrap steps and `docs/requirements.md` for scope.
 
-- Prefer **TypeScript strict-mode-friendly** code: no implicit `any`, explicit types on exported functions.
-- Keep completions **small and verifiable**. Avoid generating whole files — favor one function at a time.
-- Follow the **module-public-interface** rule: code lives behind an `index.ts` per top-level module. Never suggest deep imports across modules.
+## Build, test, lint
 
-## Library expectations
+| Task | Command |
+|---|---|
+| Install deps | `pnpm install` |
+| Dev server | `pnpm dev` (HTTPS required) |
+| Build | `pnpm build` |
+| Preview | `pnpm preview` |
+| Type-check | `pnpm tsc --noEmit` |
 
-- For LLM calls: `ai` (Vercel AI SDK) + `@openrouter/ai-sdk-provider`. Never suggest `@anthropic-ai/sdk` or `openai` directly.
-- For 3D: `@react-three/fiber`, `@react-three/drei`, `@react-three/xr`. Never suggest raw three.js scene graph mutation when an R3F equivalent exists.
-- For music: `@strudel/web` 1.3.x. Never `@strudel/repl`.
-- For state: native React + `EventTarget`. Never suggest Redux/Zustand/Jotai/RxJS in POC-1 code.
+Notes: `package.json` scripts currently exit 1 until Sprint 0 is implemented. There are **no automated tests** in POC-1 (single-test command not applicable) and no lint script defined.
 
-## Hard constraints (mirror of `AGENTS.md`)
+## High-level architecture (POC-1)
 
-- `OPENROUTER_API_KEY` must never appear in browser code. All LLM calls go through `/api/compose`.
-- Animation must use `audioContext.currentTime` as the clock — never `Date.now()` / `performance.now()`.
-- WebXR requires HTTPS. Don't suggest `server: { https: false }` in `vite.config.ts`.
-- Audio start requires a user gesture — call `audioContext.resume()` from the first click handler.
+- **Single-runtime browser app**: React UI calls `composer/` to POST `/api/compose`, `musician/` evaluates Strudel and emits `NoteEvent`s via a native `EventTarget`, and `stage/` (R3F + XR) subscribes and animates.
+- **Server-side proxy only for secrets**: `server/compose-handler.ts` is the sole place the OpenRouter API key lives. It uses Vercel AI SDK + OpenRouter and returns `{ code, model }` to the browser.
+- **Sync contract**: animation timing is driven by `audioContext.currentTime`; `NoteEvent.startTime` is in the future and must be scheduled against that clock.
+
+## Key conventions & constraints
+
+- **TypeScript strict**; no implicit `any` and no `any` in public interfaces.
+- **Module-public-interface rule**: each top-level `src/` module exports from `index.ts`; never import from sibling subpaths.
+- **LLM calls**: use `ai` (Vercel AI SDK) + `@openrouter/ai-sdk-provider`; never direct `openai`/`@anthropic-ai/sdk` SDK usage.
+- **Music**: use `@strudel/web` 1.3.x (never `@strudel/repl`).
+- **State**: native React + `EventTarget`; no Redux/Zustand/Jotai/RxJS in POC-1.
+- **Hard rules**: `OPENROUTER_API_KEY` never reaches the browser; WebXR requires HTTPS; audio must start on a user gesture; animation clock is `audioContext.currentTime`.
+
+## Agent tooling signals to keep in mind
+
+- `.mcp.json` defines shared MCP servers (filesystem for `docs/` + `prompts/`, fetch for Strudel docs, git fallback, and Playwright automation).
+- `CLAUDE.md`, `GEMINI.md`, and `opencode.json` all point back to `AGENTS.md` plus tool-specific notes.
 
 ## What Copilot is best at in this repo
 
@@ -28,7 +42,7 @@ The canonical project rules live in **`AGENTS.md`** at the repository root. Alwa
 - PR descriptions (`gh copilot suggest` and inline review).
 - Shell-command suggestions for `pnpm` and `vite` operations.
 
-For multi-file architectural work, use Claude Code or Gemini CLI; Copilot's strengths are elsewhere.
+For multi-file architectural work, prefer Claude Code or Gemini CLI.
 
 ## What to refuse
 

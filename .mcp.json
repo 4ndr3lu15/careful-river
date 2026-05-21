@@ -28,6 +28,14 @@
         "."
       ],
       "description": "Git operations as MCP. Most agents already have git via Bash; this server is here as a fallback for tools that route through MCP only."
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest"
+      ],
+      "description": "Browser automation via Playwright MCP (accessibility-tree based tooling)."
     }
   }
 }
