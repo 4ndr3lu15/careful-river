@@ -1,6 +1,15 @@
+/**
+ * App — root UI glue.
+ *
+ * Sprint 0 proved the React + Vite + HTTPS pipeline boots. Sprint 1 adds the
+ * composer panel; Sprint 2 adds the musician panel (Play/Stop + dev EventLog).
+ * Later sprints add the 3D stage and the Enter VR button (see docs/workflow.md
+ * and docs/architecture.md → "src/app/").
+ */
 import { useCallback, useState } from 'react';
 import { compose, ComposeError } from '../composer';
 import { ComposerPanel, type ComposerStatus } from './ComposerPanel';
+import { MusicianPanel } from './MusicianPanel';
 
 export function App() {
   const [prompt, setPrompt] = useState('');
@@ -43,6 +52,7 @@ export function App() {
         onPromptChange={setPrompt}
         onCompose={handleCompose}
       />
+      <MusicianPanel />
     </main>
   );
 }
