@@ -42,19 +42,39 @@ You describe a vibe in natural language → an LLM picks a model and writes Stru
 | `.claude/skills/` | Reusable Claude Code skills (validator, experiment runner, VR preflight) |
 | `.mcp.json` | MCP server configuration shared across MCP-aware tools |
 
-## Getting started (planning phase)
+## Getting started
 
-The repo currently contains **no application code** — only planning documents and the agent harness. The next session implements POC-1:
+> **Status:** bootstrapped (Sprint 0 done). The app boots to a title page and `/api/compose` returns a stub — composing, audio and the 3D scene land in later sprints.
 
-1. Read `docs/requirements.md` to understand POC-1 scope (do this even if you're an AI agent).
-2. Read `docs/architecture.md` for module boundaries and the `NoteEvent` contract.
-3. Pick a coding-agent CLI (`claude`, `gemini`, `gh copilot`, `opencode`, `aider`, …) and read its per-tool pointer if it has one.
-4. Follow `docs/workflow.md` starting from Sprint 0.
+Prerequisites: Node ≥ 20 and `pnpm` (`corepack enable` provides it).
+
+1. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+2. Create your local env file:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Add a real `OPENROUTER_API_KEY` to `.env.local` — only needed once the composer lands in Sprint 1; the Sprint 0 stub ignores it.
+3. Start the dev server:
+   ```bash
+   pnpm dev
+   ```
+   Open `https://localhost:5173` and accept the self-signed certificate warning once (WebXR mandates HTTPS; the cert is generated locally). The page shows **"Banda Virtual"**.
+
+Other commands: `pnpm typecheck` (type-check), `pnpm build` (production build), `pnpm preview` (serve the build).
+
+### For contributors / coding agents
+
+1. Read `docs/requirements.md` for POC-1 scope and `docs/architecture.md` for module contracts and the `NoteEvent` bus.
+2. Pick a coding-agent CLI (`claude`, `gemini`, `gh copilot`, `opencode`, `aider`, …) and read its per-tool pointer if it has one.
+3. Follow `docs/workflow.md` from the next open sprint (see **Status** below).
 
 ## Status
 
 - [x] Planning + harness scaffolded
-- [ ] Sprint 0 — project bootstrap (Vite, HTTPS, deps, env)
+- [x] Sprint 0 — project bootstrap (Vite, HTTPS, deps, env)
 - [ ] Sprint 1 — composer module (Vercel AI SDK + OpenRouter proxy)
 - [ ] Sprint 2 — musician module (Strudel runtime + NoteEvent bus)
 - [ ] Sprint 3 — static 3D scene (4 toy characters)

@@ -16,21 +16,21 @@ This document covers (a) the sprint plan to ship POC-1 and (b) how to drive diff
 
 Each sprint fits in ~2–3 days of real work. Total: 12–14 days, within a two-week conference push with slack.
 
-### Sprint 0 — Bootstrap (1 day)
+### Sprint 0 — Bootstrap (1 day) — ✅ done
 
 **Goal:** environment runs; browser shows a "hello"; LLM proxy answers a curl.
 
 Tasks:
 
-- [ ] `pnpm install` works against the placeholder `package.json` (add deps now: `pnpm add three @react-three/fiber @react-three/drei @react-three/xr @strudel/web react react-dom ai @openrouter/ai-sdk-provider zod`; `pnpm add -D vite typescript @types/react @types/react-dom @types/three @vitejs/plugin-basic-ssl @vitejs/plugin-react`)
-- [ ] HTTPS in `vite.config.ts` via `@vitejs/plugin-basic-ssl`
-- [ ] `.env.local` with `OPENROUTER_API_KEY` (gitignored — already)
-- [ ] Empty `src/main.tsx` + `src/app/App.tsx` (title-only page)
-- [ ] `server/compose-handler.ts` skeleton that returns `{ code: 'note("c4").s("sine")' }` without calling any LLM yet
-- [ ] `https://localhost:5173` loads without errors
-- [ ] `curl -k -X POST https://localhost:5173/api/compose -H 'content-type: application/json' -d '{"prompt":"test"}'` returns the stub
+- [x] `pnpm install` works against the placeholder `package.json` (deps added: `pnpm add three @react-three/fiber @react-three/drei @react-three/xr @strudel/web react react-dom ai @openrouter/ai-sdk-provider zod`; `pnpm add -D vite typescript @types/react @types/react-dom @types/three @types/node @vitejs/plugin-basic-ssl @vitejs/plugin-react`)
+- [x] HTTPS in `vite.config.ts` via `@vitejs/plugin-basic-ssl`
+- [x] `.env.local` with `OPENROUTER_API_KEY` (gitignored — already)
+- [x] Empty `src/main.tsx` + `src/app/App.tsx` (title-only page)
+- [x] `server/compose-handler.ts` skeleton that returns `{ code: 'note("c4").s("sine")' }` without calling any LLM yet
+- [x] `https://localhost:5173` loads without errors
+- [x] `curl -k -X POST https://localhost:5173/api/compose -H 'content-type: application/json' -d '{"prompt":"test"}'` returns the stub
 
-**Done when:** browser opens to "Banda Virtual"; curl returns the stub JSON.
+**Done when:** browser opens to "Banda Virtual"; curl returns the stub JSON. — **met** (Vite 8; `@types/node` added to devDeps; `packageManager` field corrected `pnpm@9` → `pnpm@10.33.0`).
 
 ### Sprint 1 — Composer + OpenRouter wiring (2 days)
 

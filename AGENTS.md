@@ -16,7 +16,7 @@ A reviewer who clones the repo, runs `pnpm install && pnpm dev`, opens `https://
 
 - **Language**: TypeScript, `strict: true`. No `any` in public interfaces.
 - **Package manager**: `pnpm` (do not use `npm` or `yarn` — `pnpm-lock.yaml` is the source of truth).
-- **Bundler**: Vite 6.x. HTTPS is mandatory (WebXR requires a secure context). Use `@vitejs/plugin-basic-ssl` or `mkcert`.
+- **Bundler**: Vite 8.x. HTTPS is mandatory (WebXR requires a secure context). Use `@vitejs/plugin-basic-ssl` or `mkcert`.
 - **UI**: React 19 + `@react-three/fiber` + `@react-three/drei` + `@react-three/xr`.
 - **Music runtime**: `@strudel/web` 1.3.x (NOT `@strudel/repl` — that ships the editor and is 2 MB heavier).
 - **LLM layer**: Vercel AI SDK (`ai`) configured against OpenRouter via `@openrouter/ai-sdk-provider`. Never hard-code a single vendor.
