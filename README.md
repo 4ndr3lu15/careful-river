@@ -44,7 +44,7 @@ You describe a vibe in natural language → an LLM picks a model and writes Stru
 
 ## Getting started
 
-> **Status:** bootstrapped (Sprint 0 done). The app boots to a title page and `/api/compose` returns a stub — composing, audio and the 3D scene land in later sprints.
+> **Status:** Sprints 0–3 done. You can compose via OpenRouter, see Strudel code, press Play for audio, and view the static 3D stage (no sync yet). WebXR lands in later sprints.
 
 Prerequisites: Node ≥ 20 and `pnpm` (`corepack enable` provides it).
 
@@ -56,7 +56,7 @@ Prerequisites: Node ≥ 20 and `pnpm` (`corepack enable` provides it).
    ```bash
    cp .env.example .env.local
    ```
-   Add a real `OPENROUTER_API_KEY` to `.env.local` — only needed once the composer lands in Sprint 1; the Sprint 0 stub ignores it.
+   Add a real `OPENROUTER_API_KEY` to `.env.local` — required for composing starting in Sprint 1.
 3. Start the dev server:
    ```bash
    pnpm dev
@@ -75,9 +75,9 @@ Other commands: `pnpm typecheck` (type-check), `pnpm build` (production build), 
 
 - [x] Planning + harness scaffolded
 - [x] Sprint 0 — project bootstrap (Vite, HTTPS, deps, env)
-- [ ] Sprint 1 — composer module (Vercel AI SDK + OpenRouter proxy)
-- [ ] Sprint 2 — musician module (Strudel runtime + NoteEvent bus)
-- [ ] Sprint 3 — static 3D scene (4 toy characters)
+- [x] Sprint 1 — composer module (Vercel AI SDK + OpenRouter proxy)
+- [x] Sprint 2 — musician module (Strudel runtime + NoteEvent bus)
+- [x] Sprint 3 — static 3D scene (4 toy characters)
 - [ ] Sprint 4 — music ↔ animation sync ⭐
 - [ ] Sprint 5 — WebXR (Quest button + framing)
 - [ ] Sprint 6 — polish + recorded demo for the paper

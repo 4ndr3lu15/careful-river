@@ -150,7 +150,7 @@ const INSTRUMENT_MAP: Record<string, NoteEvent['instrument']> = {
 
 **Responsibility:** render the 3D scene, subscribe to events, animate characters.
 
-**Components (in `src/stage/components/`):**
+**Components (in `src/stage/`):**
 
 - `Stage.tsx` — orchestrator; sets up Canvas + XR, positions characters
 - `Musician.tsx` — generic character; subscribes to its instrument's events and animates

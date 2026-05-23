@@ -10,6 +10,7 @@ import { useCallback, useState } from 'react';
 import { compose, ComposeError } from '../composer';
 import { ComposerPanel, type ComposerStatus } from './ComposerPanel';
 import { MusicianPanel } from './MusicianPanel';
+import { Stage } from '../stage';
 
 export function App() {
   const [prompt, setPrompt] = useState('');
@@ -53,6 +54,17 @@ export function App() {
         onCompose={handleCompose}
       />
       <MusicianPanel code={code} />
+      <section
+        style={{
+          marginTop: '2rem',
+          height: '420px',
+          border: '1px solid #d0d7de',
+          borderRadius: '16px',
+          overflow: 'hidden',
+        }}
+      >
+        <Stage />
+      </section>
     </main>
   );
 }

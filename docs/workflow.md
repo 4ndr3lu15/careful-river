@@ -32,7 +32,7 @@ Tasks:
 
 **Done when:** browser opens to "Banda Virtual"; curl returns the stub JSON. — **met** (Vite 8; `@types/node` added to devDeps; `packageManager` field corrected `pnpm@9` → `pnpm@10.33.0`).
 
-### Sprint 1 — Composer + OpenRouter wiring (2 days)
+### Sprint 1 — Composer + OpenRouter wiring (2 days) — ✅ done
 
 **Goal:** type a prompt → see Strudel code generated.
 
@@ -47,9 +47,9 @@ You do manually:
 - Refine `prompts/composer-system-prompt.md` and test 5–10 prompts.
 - Pick the default `OPENROUTER_MODEL` for the demo (see `docs/llm-providers.md`).
 
-**Done when:** three different prompts produce three different, plausible Strudel snippets visible on screen.
+**Done when:** three different prompts produce three different, plausible Strudel snippets visible on screen. — **met**
 
-### Sprint 2 — Musician (Strudel runtime + event bus) (2 days)
+### Sprint 2 — Musician (Strudel runtime + event bus) (2 days) — ✅ done
 
 **Goal:** generated code actually plays, and emits per-note events.
 
@@ -65,9 +65,9 @@ You do manually:
 - Validate `audioContext.currentTime` is consistent between Strudel and your code.
 - Extend the instrument map as new samples appear.
 
-**Done when:** Play produces audio + the EventLog fills with coherent timestamps (~125 ms between hits at 120 bpm).
+**Done when:** Play produces audio + the EventLog fills with coherent timestamps (~125 ms between hits at 120 bpm). — **met**
 
-### Sprint 3 — Static 3D scene (1–2 days)
+### Sprint 3 — Static 3D scene (1–2 days) — ✅ done
 
 **Goal:** four characters visible, no audio coupling yet.
 
@@ -78,7 +78,7 @@ Delegate:
 - `<ambientLight>` + `<directionalLight>`
 - `OrbitControls` from drei (desktop only)
 
-**Done when:** page shows four colored boxes in an arc on a plane; mouse-drag rotates the view; each box has a readable label.
+**Done when:** page shows four colored boxes in an arc on a plane; mouse-drag rotates the view; each box has a readable label. — **met**
 
 ### Sprint 4 — Music ↔ animation sync (2–3 days) ⭐
 
