@@ -93,7 +93,7 @@ Delegate:
 
 **Done when:** RF-06 and RNF-04 from `docs/requirements.md` are met. — **met**
 
-### Sprint 5 — WebXR (1–2 days)
+### Sprint 5 — WebXR (1–2 days) — ✅ done
 
 **Goal:** "Enter VR" works on Quest 3.
 

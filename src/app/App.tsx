@@ -10,7 +10,7 @@ import { useCallback, useState } from 'react';
 import { compose, ComposeError } from '../composer';
 import { ComposerPanel, type ComposerStatus } from './ComposerPanel';
 import { MusicianPanel } from './MusicianPanel';
-import { Stage } from '../stage';
+import { Stage, VRButton } from '../stage';
 
 export function App() {
   const [prompt, setPrompt] = useState('');
@@ -57,6 +57,18 @@ export function App() {
       <section
         style={{
           marginTop: '2rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+        }}
+      >
+        <h2 style={{ fontSize: '1.1rem', margin: 0 }}>Stage</h2>
+        <VRButton />
+      </section>
+      <section
+        style={{
+          marginTop: '0.75rem',
           height: '420px',
           border: '1px solid #d0d7de',
           borderRadius: '16px',
