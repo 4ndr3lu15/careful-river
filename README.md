@@ -44,7 +44,7 @@ You describe a vibe in natural language → an LLM picks a model and writes Stru
 
 ## Getting started
 
-> **Status:** Sprints 0–3 done. You can compose via OpenRouter, see Strudel code, press Play for audio, and view the static 3D stage (no sync yet). WebXR lands in later sprints.
+> **Status:** Sprints 0–4 done. You can compose via OpenRouter, see Strudel code, press Play for audio, and watch the 3D stage pulse in sync. WebXR lands in later sprints.
 
 Prerequisites: Node ≥ 20 and `pnpm` (`corepack enable` provides it).
 
@@ -78,7 +78,7 @@ Other commands: `pnpm typecheck` (type-check), `pnpm build` (production build), 
 - [x] Sprint 1 — composer module (Vercel AI SDK + OpenRouter proxy)
 - [x] Sprint 2 — musician module (Strudel runtime + NoteEvent bus)
 - [x] Sprint 3 — static 3D scene (4 toy characters)
-- [ ] Sprint 4 — music ↔ animation sync ⭐
+- [x] Sprint 4 — music ↔ animation sync ⭐
 - [ ] Sprint 5 — WebXR (Quest button + framing)
 - [ ] Sprint 6 — polish + recorded demo for the paper
 

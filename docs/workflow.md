@@ -80,7 +80,7 @@ Delegate:
 
 **Done when:** page shows four colored boxes in an arc on a plane; mouse-drag rotates the view; each box has a readable label. — **met**
 
-### Sprint 4 — Music ↔ animation sync (2–3 days) ⭐
+### Sprint 4 — Music ↔ animation sync (2–3 days) ⭐ — ✅ done
 
 **Goal:** boxes pulse when their instrument plays.
 
@@ -91,7 +91,7 @@ Delegate:
 - `setTimeout(triggerPulse, Math.max(0, delay))`
 - Pulse via `useFrame` + `useRef` (no `framer-motion`)
 
-**Done when:** RF-06 and RNF-04 from `docs/requirements.md` are met.
+**Done when:** RF-06 and RNF-04 from `docs/requirements.md` are met. — **met**
 
 ### Sprint 5 — WebXR (1–2 days)
 

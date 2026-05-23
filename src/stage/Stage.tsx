@@ -1,13 +1,39 @@
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import type { NoteEvent } from '../types';
 import { Floor } from './Floor';
 import { Musician } from './Musician';
 
-const musicians = [
-  { label: 'Drums', color: '#ef4444', position: [-2.3, 0, -1] as const },
-  { label: 'Bass', color: '#3b82f6', position: [-0.8, 0, 0] as const },
-  { label: 'Keys', color: '#22c55e', position: [0.8, 0, 0] as const },
-  { label: 'Horns', color: '#f59e0b', position: [2.3, 0, -1] as const },
+const musicians: Array<{
+  label: string;
+  instrument: NoteEvent['instrument'];
+  color: string;
+  position: readonly [number, number, number];
+}> = [
+  {
+    label: 'Drums',
+    instrument: 'drums',
+    color: '#ef4444',
+    position: [-2.3, 0, -1] as const,
+  },
+  {
+    label: 'Bass',
+    instrument: 'bass',
+    color: '#3b82f6',
+    position: [-0.8, 0, 0] as const,
+  },
+  {
+    label: 'Keys',
+    instrument: 'keys',
+    color: '#22c55e',
+    position: [0.8, 0, 0] as const,
+  },
+  {
+    label: 'Horns',
+    instrument: 'horns',
+    color: '#f59e0b',
+    position: [2.3, 0, -1] as const,
+  },
 ];
 
 export function Stage() {
