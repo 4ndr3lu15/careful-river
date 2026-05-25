@@ -14,6 +14,7 @@ import { Stage, VRButton } from '../stage';
 
 export function App() {
   const [prompt, setPrompt] = useState('');
+  const [modelOverride, setModelOverride] = useState('');
   const [status, setStatus] = useState<ComposerStatus>('idle');
   const [code, setCode] = useState<string | null>(null);
   const [model, setModel] = useState<string | null>(null);
@@ -25,8 +26,12 @@ export function App() {
     setStatus('composing');
     setError(null);
 
+    const trimmedOverride = modelOverride.trim();
     try {
-      const result = await compose({ prompt });
+      const result = await compose({
+        prompt,
+        ...(trimmedOverride ? { modelOverride: trimmedOverride } : {}),
+      });
       setCode(result.code);
       setModel(result.model);
       setStatus('ready');
@@ -38,7 +43,7 @@ export function App() {
       setError(message);
       setStatus('error');
     }
-  }, [prompt, status]);
+  }, [prompt, modelOverride, status]);
 
   return (
     <main style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem' }}>
@@ -46,11 +51,13 @@ export function App() {
       <p>WebXR + LLM virtual band — proof of concept.</p>
       <ComposerPanel
         prompt={prompt}
+        modelOverride={modelOverride}
         status={status}
         code={code}
         model={model}
         error={error}
         onPromptChange={setPrompt}
+        onModelOverrideChange={setModelOverride}
         onCompose={handleCompose}
       />
       <MusicianPanel code={code} />

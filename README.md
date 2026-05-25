@@ -44,7 +44,7 @@ You describe a vibe in natural language → an LLM picks a model and writes Stru
 
 ## Getting started
 
-> **Status:** Sprints 0–5 done. You can compose via OpenRouter, see Strudel code, press Play for audio, watch the 3D stage pulse in sync, and use Enter VR on WebXR-capable browsers.
+> **Status:** Sprints 0–5 done; Sprint 6 (polish) in progress. You can compose via OpenRouter, see Strudel code, press Play for audio, watch the 3D stage pulse in sync, swap models per-compose from the UI, and use Enter VR on WebXR-capable browsers. Invalid patterns and provider errors surface in the UI; Stop always silences a running pattern.
 
 Prerequisites: Node ≥ 20 and `pnpm` (`corepack enable` provides it).
 
@@ -56,7 +56,7 @@ Prerequisites: Node ≥ 20 and `pnpm` (`corepack enable` provides it).
    ```bash
    cp .env.example .env.local
    ```
-   Add a real `OPENROUTER_API_KEY` to `.env.local` — required for composing starting in Sprint 1.
+   Add a real `OPENROUTER_API_KEY` to `.env.local` — required for composing. Optionally set `OPENROUTER_MODEL` (default `anthropic/claude-sonnet-4.6`); you can also override the model per-request from the "Model override" input in the UI without restarting the dev server.
 3. Start the dev server:
    ```bash
    pnpm dev

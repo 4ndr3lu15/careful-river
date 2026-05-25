@@ -4,21 +4,25 @@ export type ComposerStatus = 'idle' | 'composing' | 'ready' | 'error';
 
 interface ComposerPanelProps {
   prompt: string;
+  modelOverride: string;
   status: ComposerStatus;
   code: string | null;
   model: string | null;
   error: string | null;
   onPromptChange: (value: string) => void;
+  onModelOverrideChange: (value: string) => void;
   onCompose: () => void;
 }
 
 export function ComposerPanel({
   prompt,
+  modelOverride,
   status,
   code,
   model,
   error,
   onPromptChange,
+  onModelOverrideChange,
   onCompose,
 }: ComposerPanelProps) {
   const canCompose = prompt.trim().length > 0 && status !== 'composing';
@@ -40,6 +44,39 @@ export function ComposerPanel({
             marginTop: '0.5rem',
             padding: '0.75rem',
             fontSize: '1rem',
+            borderRadius: '8px',
+            border: '1px solid #d0d7de',
+          }}
+        />
+      </label>
+
+      <label
+        style={{
+          display: 'block',
+          marginBottom: '0.75rem',
+          fontWeight: 600,
+          fontSize: '0.9rem',
+        }}
+      >
+        Model override{' '}
+        <span style={{ fontWeight: 'normal', opacity: 0.6 }}>
+          · optional, e.g. <code>openai/gpt-4o</code>
+        </span>
+        <input
+          type="text"
+          value={modelOverride}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            onModelOverrideChange(event.target.value)
+          }
+          placeholder="leave blank to use OPENROUTER_MODEL from .env.local"
+          spellCheck={false}
+          style={{
+            display: 'block',
+            width: '100%',
+            marginTop: '0.4rem',
+            padding: '0.5rem 0.75rem',
+            fontSize: '0.95rem',
+            fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
             borderRadius: '8px',
             border: '1px solid #d0d7de',
           }}

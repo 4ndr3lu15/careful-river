@@ -110,17 +110,24 @@ You do manually:
 
 **Done when:** RF-07 from `docs/requirements.md` is met.
 
-### Sprint 6 — Polish + recorded demo (1–2 days)
+### Sprint 6 — Polish + recorded demo (1–2 days) — 🚧 in progress
 
 **Goal:** every "POC-1 done" checkbox in `docs/requirements.md` ticks.
 
 Tasks:
 
-- Error recovery (RNF-05) — run the three scenarios
-- Loading states on buttons
-- README "Getting started" verified on a clean machine
-- 60–90 s screen recording (desktop + VR) saved next to `docs/publication-plan.md`
-- The "swap model" demo — show prompt A on three different models, save outputs
+- [x] Error recovery (RNF-05) — invalid Strudel and provider 429/500 now
+      surface in the UI; Play is gated on having code, so "Play before
+      composing" is impossible to reach
+- [x] Loading states on buttons — Compose shows aria-busy / "Composing...",
+      Play shows "Loading…" until the engine is ready and "↻ Restart" while a
+      pattern is live, Stop stays clickable while playing (silences runaway
+      patterns)
+- [x] Inline model override in the UI so the swap-model demo no longer needs a
+      dev-server restart
+- [ ] README "Getting started" verified on a clean machine
+- [ ] 60–90 s screen recording (desktop + VR) saved next to `docs/publication-plan.md`
+- [ ] The "swap model" demo — show prompt A on three different models, save outputs
 
 ## Picking a coding agent
 

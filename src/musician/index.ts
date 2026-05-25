@@ -30,6 +30,13 @@ export const audioContext: AudioContext = getAudioContext();
  */
 export const events: EventTarget = new EventTarget();
 
+/**
+ * Runtime errors from the Strudel transpiler/evaluator. The UI listens here so
+ * an invalid pattern surfaces as a visible message instead of a silent console
+ * log (RNF-05 scenario 1). `detail` is the human-readable message.
+ */
+export const errors: EventTarget = new EventTarget();
+
 /** `initStrudel()` mutates global state — guard so it runs exactly once. */
 let initPromise: Promise<void> | null = null;
 
@@ -45,8 +52,11 @@ export function init(): Promise<void> {
       // default webaudio output still plays the note, and we additionally
       // observe each hap to emit a NoteEvent. See @strudel/core `getTrigger`.
       editPattern: (pattern) => pattern.onTrigger(handleTrigger, false),
-      onEvalError: (error) =>
-        console.error('[musician] invalid Strudel code:', error),
+      onEvalError: (error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('[musician] invalid Strudel code:', error);
+        errors.dispatchEvent(new CustomEvent<string>('error', { detail: message }));
+      },
     });
   })();
   return initPromise;
