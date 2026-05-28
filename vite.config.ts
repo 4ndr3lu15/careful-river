@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import { composeHandler } from './server/compose-handler';
@@ -21,8 +21,24 @@ function composeApi(): Plugin {
   };
 }
 
-export default defineConfig({
-  // basicSsl() supplies the self-signed cert WebXR needs (AGENTS.md hard rule 3).
-  plugins: [react(), basicSsl(), composeApi()],
-  server: { port: 5173, strictPort: true },
+export default defineConfig(({ mode }) => {
+  // Vite exposes only VITE_* vars to the client; server middleware reads
+  // process.env, which Vite does not auto-populate. Pull the OpenRouter
+  // server-side keys from .env.local into process.env so compose-handler.ts
+  // can see them. Shell-exported values still win.
+  const env = loadEnv(mode, process.cwd(), '');
+  for (const key of [
+    'OPENROUTER_API_KEY',
+    'OPENROUTER_MODEL',
+    'OPENROUTER_SITE_URL',
+    'OPENROUTER_APP_NAME',
+  ]) {
+    if (env[key] && !process.env[key]) process.env[key] = env[key];
+  }
+
+  return {
+    // basicSsl() supplies the self-signed cert WebXR needs (AGENTS.md hard rule 3).
+    plugins: [react(), basicSsl(), composeApi()],
+    server: { port: 5173, strictPort: true },
+  };
 });
