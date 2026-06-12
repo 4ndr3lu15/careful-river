@@ -1,17 +1,32 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { generateText } from 'ai';
+import type { LanguageModel } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { createDeepSeek } from '@ai-sdk/deepseek';
 import { z } from 'zod';
+
+const PERSONA_INSTRUMENTS = ['drums', 'bass', 'keys', 'horns'] as const;
+type PersonaInstrument = (typeof PERSONA_INSTRUMENTS)[number];
+
+/** Instrument category → on-stage persona name (mirrors src/band.ts). */
+const PERSONA_NAMES: Record<PersonaInstrument, string> = {
+  drums: 'VOLT',
+  bass: 'ABYSS',
+  keys: 'ORACLE',
+  horns: 'NOVA',
+};
 
 const composeRequestSchema = z.object({
   prompt: z.string().trim().min(1),
   bpm: z.number().finite().positive().optional(),
   duration: z.number().finite().positive().optional(),
   modelOverride: z.string().trim().min(1).optional(),
+  roles: z.array(z.enum(PERSONA_INSTRUMENTS)).optional(),
 });
 
-const DEFAULT_MODEL = 'anthropic/claude-sonnet-4.6';
+const OPENROUTER_DEFAULT_MODEL = 'anthropic/claude-sonnet-4.6';
+const DEEPSEEK_DEFAULT_MODEL = 'deepseek-chat';
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_OUTPUT_TOKENS = 1024;
 
@@ -74,22 +89,20 @@ export async function composeHandler(
     return;
   }
 
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
+  let languageModel: LanguageModel;
+  let modelId: string;
+  try {
+    ({ languageModel, modelId } = resolveModel(requestBody));
+  } catch (err) {
     sendJson(res, 500, {
       error: {
         code: 'unknown',
-        message: 'Missing OPENROUTER_API_KEY.',
+        message: err instanceof Error ? err.message : 'Provider configuration error.',
         retryable: false,
       },
     });
     return;
   }
-
-  const model =
-    requestBody.modelOverride?.trim() ||
-    process.env.OPENROUTER_MODEL ||
-    DEFAULT_MODEL;
 
   let system: string;
   try {
@@ -106,21 +119,13 @@ export async function composeHandler(
   }
   const prompt = buildUserPrompt(requestBody);
 
-  const openrouter = createOpenRouter({
-    apiKey,
-    headers: {
-      'HTTP-Referer': process.env.OPENROUTER_SITE_URL ?? '',
-      'X-Title': process.env.OPENROUTER_APP_NAME ?? '',
-    },
-  });
-
   const start = Date.now();
   const abortController = new AbortController();
   const timeout = setTimeout(() => abortController.abort(), REQUEST_TIMEOUT_MS);
 
   try {
     const result = await generateText({
-      model: openrouter(model),
+      model: languageModel,
       system,
       prompt,
       maxOutputTokens: MAX_OUTPUT_TOKENS,
@@ -142,20 +147,43 @@ export async function composeHandler(
     const durationMs = Date.now() - start;
     const tokenCount = result.usage?.totalTokens;
     const tokenNote = typeof tokenCount === 'number' ? ` (~${tokenCount} tokens)` : '';
-    console.log(`[compose] ${model} ok in ${durationMs}ms${tokenNote}`);
+    console.log(`[compose] ${modelId} ok in ${durationMs}ms${tokenNote}`);
 
-    sendJson(res, 200, { code, model });
+    sendJson(res, 200, { code, model: modelId });
   } catch (error) {
     const durationMs = Date.now() - start;
     const mapped = mapComposeError(error);
     console.error(
-      `[compose] ${model} error in ${durationMs}ms`,
+      `[compose] ${modelId} error in ${durationMs}ms`,
       error instanceof Error ? error.message : error,
     );
     sendJson(res, 502, { error: mapped });
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function resolveModel(request: ComposeRequest): { languageModel: LanguageModel; modelId: string } {
+  const provider = (process.env.COMPOSE_PROVIDER ?? 'openrouter').toLowerCase().trim();
+
+  if (provider === 'deepseek') {
+    const apiKey = process.env.DEEPSEEK_API_KEY;
+    if (!apiKey) throw new Error('Missing DEEPSEEK_API_KEY.');
+    const modelId = request.modelOverride?.trim() || process.env.DEEPSEEK_MODEL || DEEPSEEK_DEFAULT_MODEL;
+    return { languageModel: createDeepSeek({ apiKey })(modelId), modelId };
+  }
+
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error('Missing OPENROUTER_API_KEY.');
+  const modelId = request.modelOverride?.trim() || process.env.OPENROUTER_MODEL || OPENROUTER_DEFAULT_MODEL;
+  const openrouter = createOpenRouter({
+    apiKey,
+    headers: {
+      'HTTP-Referer': process.env.OPENROUTER_SITE_URL ?? '',
+      'X-Title': process.env.OPENROUTER_APP_NAME ?? '',
+    },
+  });
+  return { languageModel: openrouter(modelId), modelId };
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {
@@ -203,6 +231,17 @@ function buildUserPrompt(request: ComposeRequest): string {
   if (typeof request.duration === 'number') {
     parts.push(`Duration: ${Math.round(request.duration)} seconds.`);
   }
+
+  // De-dupe + keep a stable order, then map each category to its persona.
+  const roles = PERSONA_INSTRUMENTS.filter((cat) => request.roles?.includes(cat));
+  if (roles.length > 0) {
+    const performers = roles.map((cat) => `${PERSONA_NAMES[cat]} (${cat})`).join(', ');
+    parts.push(
+      `Active performers: ${performers}. Write a part ONLY for these instrument ` +
+        `categories — one entry per performer inside the stack — and omit every other instrument.`,
+    );
+  }
+
   return parts.join('\n');
 }
 
@@ -223,7 +262,7 @@ function mapComposeError(error: unknown): ComposeErrorPayload {
   if (status === 400 || status === 404) {
     return {
       code: 'model_unavailable',
-      message: 'Model not available. Check OPENROUTER_MODEL.',
+      message: 'Model not available. Check COMPOSE_PROVIDER / *_MODEL env var.',
       providerStatus: status,
       retryable: false,
     };

@@ -14,6 +14,15 @@ Picking both gives you:
 - One line change to swap models for an experiment.
 - An exit ramp later: replace `createOpenRouter(...)` with `createOpenAI(...)` / `createAnthropic(...)` / etc. without touching `composer/`.
 
+## Supported providers
+
+| `COMPOSE_PROVIDER` value | SDK package | Key env var | Model env var | Default model |
+|---|---|---|---|---|
+| `openrouter` (default) | `@openrouter/ai-sdk-provider` | `OPENROUTER_API_KEY` | `OPENROUTER_MODEL` | `anthropic/claude-sonnet-4.6` |
+| `deepseek` | `@ai-sdk/deepseek` | `DEEPSEEK_API_KEY` | `DEEPSEEK_MODEL` | `deepseek-chat` |
+
+Set `COMPOSE_PROVIDER` in `.env.local` to switch. Omitting it keeps OpenRouter as the default.
+
 ## Setup
 
 ### 1. Get an OpenRouter key
@@ -32,7 +41,7 @@ pnpm add ai @openrouter/ai-sdk-provider zod
 
 ### 3. Configure env
 
-`.env.local` (gitignored):
+`.env.local` (gitignored) — OpenRouter (default):
 
 ```
 OPENROUTER_API_KEY=sk-or-v1-...
@@ -42,6 +51,16 @@ OPENROUTER_APP_NAME=banda-virtual
 ```
 
 `OPENROUTER_SITE_URL` and `OPENROUTER_APP_NAME` are recommended by OpenRouter for routing analytics. They are sent as `HTTP-Referer` and `X-Title` headers and are visible on your OpenRouter dashboard.
+
+`.env.local` — DeepSeek:
+
+```
+COMPOSE_PROVIDER=deepseek
+DEEPSEEK_API_KEY=sk-...
+DEEPSEEK_MODEL=deepseek-chat
+```
+
+Available DeepSeek models: `deepseek-chat` (DeepSeek-V3, default) and `deepseek-reasoner` (DeepSeek-R1).
 
 ### 4. The provider construction (reference — actual code lives in `server/compose-handler.ts`)
 
