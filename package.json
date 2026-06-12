@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@ai-sdk/deepseek": "^2.0.37",
+    "@ai-sdk/openai-compatible": "^2.0.50",
     "@openrouter/ai-sdk-provider": "^2.9.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
