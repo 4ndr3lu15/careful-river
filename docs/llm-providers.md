@@ -47,7 +47,7 @@ pnpm add ai @openrouter/ai-sdk-provider zod
 OPENROUTER_API_KEY=sk-or-v1-...
 OPENROUTER_MODEL=anthropic/claude-sonnet-4.6
 OPENROUTER_SITE_URL=https://localhost:5173
-OPENROUTER_APP_NAME=banda-virtual
+OPENROUTER_APP_NAME=virtual.band
 ```
 
 `OPENROUTER_SITE_URL` and `OPENROUTER_APP_NAME` are recommended by OpenRouter for routing analytics. They are sent as `HTTP-Referer` and `X-Title` headers and are visible on your OpenRouter dashboard.

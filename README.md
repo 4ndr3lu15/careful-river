@@ -56,7 +56,7 @@ Prerequisites: Node ≥ 20 and `pnpm` (`corepack enable` provides it).
    ```bash
    pnpm dev
    ```
-   Open `https://localhost:5173` and accept the self-signed certificate warning once (WebXR mandates HTTPS; the cert is generated locally). The page shows **"Banda Virtual"**.
+   Open `https://localhost:5173` and accept the self-signed certificate warning once (WebXR mandates HTTPS; the cert is generated locally). The page shows **"virtual.band"**.
 
 Other commands: `pnpm typecheck` (type-check), `pnpm build` (production build), `pnpm preview` (serve the build).
 

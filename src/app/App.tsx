@@ -75,7 +75,7 @@ export function App() {
     <div className="app">
       <header className="app__header">
         <div>
-          <h1 className="title">BANDA VIRTUAL</h1>
+          <h1 className="title">VIRTUAL.BAND</h1>
           <p className="subtitle">Cyberpunk electro-jazz · live-coded by AI</p>
         </div>
         <VRButton />

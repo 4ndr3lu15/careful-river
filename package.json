@@ -1,5 +1,5 @@
 {
-  "name": "banda-virtual",
+  "name": "virtual.band",
   "private": true,
   "version": "0.0.0",
   "description": "Composer agent + WebXR virtual band. POC for a conference publication. See README.md and AGENTS.md.",

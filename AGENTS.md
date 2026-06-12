@@ -6,7 +6,7 @@ If you are a coding agent reading this for the first time, read it end-to-end be
 
 ## Project in one paragraph
 
-`banda-virtual` is a WebXR + LLM proof of concept: a model-agnostic composer agent generates [Strudel](https://strudel.cc) code at runtime; the browser executes it; a Three.js / React Three Fiber scene animates four toy musicians in sync with the audio; the same build runs on desktop browsers and on Meta Quest / Wolvic. The aim is a reproducible demo for a conference publication — not a polished product.
+`virtual.band` is a WebXR + LLM proof of concept: a model-agnostic composer agent generates [Strudel](https://strudel.cc) code at runtime; the browser executes it; a Three.js / React Three Fiber scene animates four toy musicians in sync with the audio; the same build runs on desktop browsers and on Meta Quest / Wolvic. The aim is a reproducible demo for a conference publication — not a polished product.
 
 ## Target audience for the demo
 

@@ -30,7 +30,7 @@ Tasks:
 - [x] `https://localhost:5173` loads without errors
 - [x] `curl -k -X POST https://localhost:5173/api/compose -H 'content-type: application/json' -d '{"prompt":"test"}'` returns the stub
 
-**Done when:** browser opens to "Banda Virtual"; curl returns the stub JSON. — **met** (Vite 8; `@types/node` added to devDeps; `packageManager` field corrected `pnpm@9` → `pnpm@10.33.0`).
+**Done when:** browser opens to "virtual.band"; curl returns the stub JSON. — **met** (Vite 8; `@types/node` added to devDeps; `packageManager` field corrected `pnpm@9` → `pnpm@10.33.0`).
 
 ### Sprint 1 — Composer + OpenRouter wiring (2 days) — ✅ done
 
@@ -192,7 +192,7 @@ Reads `AGENTS.md`. Pass files explicitly: `aider src/composer/index.ts server/co
 ### Pattern: scoped feature implementation
 
 ```
-Context: I'm in Sprint 2 of this repo (banda-virtual POC). I need the
+Context: I'm in Sprint 2 of this repo (virtual.band POC). I need the
 musician/ module.
 
 Task: implement src/musician/ as specified in docs/architecture.md (section
