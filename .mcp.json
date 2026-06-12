@@ -12,18 +12,16 @@
       "description": "Read-only filesystem access to planning docs and prompt files. Lets agents pull docs/architecture.md, prompts/composer-system-prompt.md etc. into context without re-reading on every turn."
     },
     "fetch": {
-      "command": "npx",
+      "command": "uvx",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-fetch"
+        "mcp-server-fetch"
       ],
       "description": "HTTP fetcher. Used to pull live Strudel docs (https://strudel.cc/learn/, https://strudel.cc/technical-manual/) when refining the composer system prompt. Also useful to spot-check generated code against the current API."
     },
     "git": {
-      "command": "npx",
+      "command": "uvx",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-git",
+        "mcp-server-git",
         "--repository",
         "."
       ],

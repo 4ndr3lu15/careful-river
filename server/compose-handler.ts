@@ -7,6 +7,7 @@ import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { z } from 'zod';
 import { findPreset } from '../src/composer/providers';
+import { buildPersonaDocs } from '../src/composer/persona-docs';
 
 const PERSONA_INSTRUMENTS = ['drums', 'bass', 'keys', 'horns'] as const;
 type PersonaInstrument = (typeof PERSONA_INSTRUMENTS)[number];
@@ -38,7 +39,13 @@ const composeRequestSchema = z.object({
 const OPENROUTER_DEFAULT_MODEL = 'anthropic/claude-sonnet-4.6';
 const DEEPSEEK_DEFAULT_MODEL = 'deepseek-chat';
 const REQUEST_TIMEOUT_MS = 30_000;
-const MAX_OUTPUT_TOKENS = 1024;
+// Reasoning models (deepseek-reasoner, deepseek-v4-flash, …) spend output
+// tokens *thinking* before they emit a single character of the answer, and
+// that reasoning is drawn from the same budget as the response. A reasoner
+// routinely burns 500–2000+ tokens before writing code, so a tight cap
+// truncates the answer to empty/garbage (finishReason: 'length'). The actual
+// Strudel expression is only ~50–100 tokens, so the headroom is nearly free.
+const MAX_OUTPUT_TOKENS = 8192;
 
 type ComposeRequest = z.infer<typeof composeRequestSchema>;
 type ComposeErrorCode =
@@ -116,7 +123,11 @@ export async function composeHandler(
 
   let system: string;
   try {
-    system = await loadSystemPrompt();
+    const basePrompt = await loadSystemPrompt();
+    // Append focused Strudel docs for only the personas that will play. Weaker
+    // models lean on these worked examples; strong models ignore the redundancy.
+    const personaDocs = buildPersonaDocs(requestBody.roles);
+    system = personaDocs ? `${basePrompt}\n\n${personaDocs}` : basePrompt;
   } catch (error) {
     sendJson(res, 500, {
       error: {
@@ -144,10 +155,20 @@ export async function composeHandler(
 
     const code = result.text.trim();
     if (!code) {
+      // Most common cause: a reasoning model spent the whole output budget
+      // thinking and got cut off before writing the answer (finishReason
+      // 'length'). Surface that so it isn't mistaken for a provider outage.
+      const truncated = result.finishReason === 'length';
+      console.warn(
+        `[compose] ${modelId} empty text (finishReason=${result.finishReason}, ` +
+          `reasoningTokens=${result.usage?.reasoningTokens ?? '?'})`,
+      );
       sendJson(res, 502, {
         error: {
           code: 'invalid_response',
-          message: 'Model returned an empty response.',
+          message: truncated
+            ? 'Model hit the output token limit while reasoning and returned no code. Try a non-reasoning model or shorter request.'
+            : 'Model returned an empty response.',
           retryable: true,
         },
       });
@@ -210,11 +231,24 @@ function resolveModel(request: ComposeRequest): { languageModel: LanguageModel; 
 function resolveDevOverride(
   override: NonNullable<ComposeRequest['devOverride']>,
 ): { languageModel: LanguageModel; modelId: string } {
+  console.log(`[compose] dev-override ${override.provider}/${override.model}`);
+
+  // DeepSeek's models are reasoners: route them through the dedicated provider
+  // (same as the production env path) so reasoning_content is parsed correctly
+  // and kept out of the answer text. The generic openai-compatible adapter
+  // works too, but mismatches the prod path and DeepSeek's usage accounting.
+  if (override.provider === 'deepseek') {
+    const client = createDeepSeek({
+      apiKey: override.apiKey,
+      ...(override.baseURL?.trim() ? { baseURL: override.baseURL.trim() } : {}),
+    });
+    return { languageModel: client(override.model), modelId: override.model };
+  }
+
   const baseURL = override.baseURL?.trim() || findPreset(override.provider)?.baseURL;
   if (!baseURL) {
     throw new Error(`No base URL for provider "${override.provider}".`);
   }
-  console.log(`[compose] dev-override ${override.provider}/${override.model}`);
   const client = createOpenAICompatible({
     name: override.provider,
     apiKey: override.apiKey,
