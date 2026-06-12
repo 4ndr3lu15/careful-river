@@ -7,7 +7,7 @@
  * timestamps.
  *
  * The Strudel pattern is owned by `App` (sourced from the composer) and passed
- * in as a prop — the panel has no editor of its own; `ComposerPanel` already
+ * in as a prop — the panel has no editor of its own; `CodePanel` already
  * displays the generated code.
  */
 import { useEffect, useState } from 'react';
@@ -78,23 +78,22 @@ export function MusicianPanel({ code }: MusicianPanelProps) {
   const playing = status === 'playing';
 
   return (
-    <section style={{ marginTop: '1.5rem' }}>
-      <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.5rem' }}>
-        Musician{' '}
-        <span style={{ fontWeight: 'normal', opacity: 0.6, fontSize: '0.85rem' }}>
-          · {status}
-        </span>
+    <section className="panel">
+      <h2 className="panel__title">
+        Transport
+        <span className="status-pill">{status}</span>
       </h2>
 
       {code ? null : (
-        <p style={{ margin: '0 0 0.5rem', opacity: 0.6, fontSize: '0.9rem' }}>
-          Compose a pattern above, then press Play.
+        <p className="muted" style={{ margin: '0 0 0.75rem' }}>
+          Pick a scene, then press Play.
         </p>
       )}
 
-      <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+      <div className="controls">
         <button
           type="button"
+          className="btn btn--primary"
           onClick={handlePlay}
           disabled={busy || !code}
           aria-busy={busy}
@@ -104,6 +103,7 @@ export function MusicianPanel({ code }: MusicianPanelProps) {
         </button>
         <button
           type="button"
+          className="btn"
           onClick={handleStop}
           disabled={busy}
           title="Always available — silences a runaway pattern"
@@ -113,15 +113,7 @@ export function MusicianPanel({ code }: MusicianPanelProps) {
       </div>
 
       {error ? (
-        <p
-          role="alert"
-          style={{
-            marginTop: '0.75rem',
-            color: '#d1242f',
-            fontSize: '0.9rem',
-            whiteSpace: 'pre-wrap',
-          }}
-        >
+        <p role="alert" className="error-text">
           {error}
         </p>
       ) : null}

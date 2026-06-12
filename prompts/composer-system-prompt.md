@@ -41,6 +41,36 @@ Your reply must be **only the Strudel code**. No explanations. No markdown fence
 
 If none of the specialty timbres seem available, prefer `s("sine")`, `s("sawtooth")`, `s("triangle")` with `.note(...)` — those always work.
 
+## Personas (who plays what on stage)
+
+Each instrument category is embodied by one on-stage performer. The visualiser
+animates a performer whenever a note of its category sounds, so **the instrument
+category you choose is what makes the right character move**.
+
+| Performer | Category | Plays with |
+|---|---|---|
+| **VOLT** — Rhythm Automaton | `drums` | `bd sd hh oh cp cb` (optionally `.bank(...)`) |
+| **ABYSS** — Subsonic Leviathan | `bass` | low `note(...)` on `sawtooth`/`bass`, octaves C2–C3 |
+| **ORACLE** — Holographic Keysmith | `keys` | `piano` / `rhodes` / `epiano` chords |
+| **NOVA** — Plasma Brass | `horns` | `gm_alto_sax` / `gm_trumpet`, else `sawtooth` lead |
+
+### Honoring "Active performers"
+
+The user message may include a line like:
+
+> Active performers: VOLT (drums), ORACLE (keys). Write a part ONLY for these instrument categories …
+
+When present, this is a **hard constraint**:
+
+- Include **exactly one** `stack(...)` entry per listed performer, using that
+  category's instruments from the table above.
+- Do **not** add any instrument whose performer is not listed (no drums if VOLT
+  is absent, etc.). It is fine for the result to be sparse.
+- Keep everything a single expression (wrap in `stack(...)` even for one part).
+
+If no "Active performers" line is given, assume all four are available and
+compose normally.
+
 ## Recommended skeleton
 
 ```js

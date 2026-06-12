@@ -6,7 +6,6 @@
  * not to ship. Remove it once the 3D stage consumes events directly.
  */
 import { useEffect, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
 import type { NoteEvent, NoteCustomEvent } from '../types';
 import { events } from '../musician';
 
@@ -36,30 +35,22 @@ export function EventLog() {
   if (!import.meta.env.DEV) return null;
 
   return (
-    <section
-      style={{
-        marginTop: '1rem',
-        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-        fontSize: '0.8rem',
-      }}
-    >
-      <h2 style={{ fontSize: '0.9rem', margin: '0 0 0.25rem' }}>
-        Event log{' '}
-        <span style={{ fontWeight: 'normal', opacity: 0.6 }}>
-          · dev only · last {MAX_ROWS}
-        </span>
+    <section className="eventlog">
+      <h2 className="panel__title" style={{ marginBottom: '0.5rem' }}>
+        Event Log
+        <span className="status-pill">dev · last {MAX_ROWS}</span>
       </h2>
       {rows.length === 0 ? (
-        <p style={{ opacity: 0.6, margin: 0 }}>No notes yet — press Play.</p>
+        <p className="muted" style={{ margin: 0 }}>No notes yet — press Play.</p>
       ) : (
-        <table style={{ borderCollapse: 'collapse', minWidth: '32rem' }}>
+        <table>
           <thead>
-            <tr style={{ textAlign: 'left', opacity: 0.6 }}>
-              <th style={cell}>instrument</th>
-              <th style={cell}>note</th>
-              <th style={cell}>start (s)</th>
-              <th style={cell}>dur (ms)</th>
-              <th style={cell}>Δ (ms)</th>
+            <tr>
+              <th>instrument</th>
+              <th>note</th>
+              <th>start (s)</th>
+              <th>dur (ms)</th>
+              <th>Δ (ms)</th>
             </tr>
           </thead>
           <tbody>
@@ -72,13 +63,11 @@ export function EventLog() {
                   : undefined;
               return (
                 <tr key={id}>
-                  <td style={cell}>{event.instrument}</td>
-                  <td style={cell}>{event.note ?? '—'}</td>
-                  <td style={cell}>{event.startTime.toFixed(3)}</td>
-                  <td style={cell}>{(event.duration * 1000).toFixed(0)}</td>
-                  <td style={cell}>
-                    {deltaMs === undefined ? '—' : deltaMs.toFixed(0)}
-                  </td>
+                  <td>{event.instrument}</td>
+                  <td>{event.note ?? '—'}</td>
+                  <td>{event.startTime.toFixed(3)}</td>
+                  <td>{(event.duration * 1000).toFixed(0)}</td>
+                  <td>{deltaMs === undefined ? '—' : deltaMs.toFixed(0)}</td>
                 </tr>
               );
             })}
@@ -88,7 +77,3 @@ export function EventLog() {
     </section>
   );
 }
-
-const cell: CSSProperties = {
-  padding: '0.1rem 0.6rem 0.1rem 0',
-};

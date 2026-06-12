@@ -11,8 +11,8 @@
       "options": {
         "apiKey": "{env:OPENROUTER_API_KEY}",
         "headers": {
-          "HTTP-Referer": "https://github.com/banda-virtual",
-          "X-Title": "banda-virtual-opencode"
+          "HTTP-Referer": "https://github.com/4ndr3lu15/virtual.band",
+          "X-Title": "virtual.band-opencode"
         }
       }
     }

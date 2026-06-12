@@ -1,12 +1,7 @@
-# Banda Virtual — Composer Agent in Virtual Reality
+# virtual.band
 
 > An LLM agent composes music in [Strudel](https://strudel.cc); a WebXR scene renders a virtual band playing it in sync — same browser, same event loop, runs on desktop and standalone VR headsets (Quest 3 / Wolvic).
 
-This is a **clean v2** of an earlier proof of concept ([archived sketch](../../Downloads/banda-virtual)). Goals of v2:
-
-1. **Model-agnostic agent** — runtime composer talks to LLMs via OpenRouter through the Vercel AI SDK, not a single vendor SDK. Swap GPT-4o ↔ Claude Opus 4.7 ↔ Gemini 2.5 ↔ open models in one line.
-2. **Multi-CLI dev harness** — the repo is set up so Claude Code, Gemini CLI, GitHub Copilot CLI, OpenCode, Aider and similar tools all behave consistently when invoked here.
-3. **Conference-ready** — the demo is the artifact. Reproducible from `git clone` to "band playing in Quest" in under 10 minutes.
 
 ## One-sentence vision
 
@@ -61,7 +56,7 @@ Prerequisites: Node ≥ 20 and `pnpm` (`corepack enable` provides it).
    ```bash
    pnpm dev
    ```
-   Open `https://localhost:5173` and accept the self-signed certificate warning once (WebXR mandates HTTPS; the cert is generated locally). The page shows **"Banda Virtual"**.
+   Open `https://localhost:5173` and accept the self-signed certificate warning once (WebXR mandates HTTPS; the cert is generated locally). The page shows **"virtual.band"**.
 
 Other commands: `pnpm typecheck` (type-check), `pnpm build` (production build), `pnpm preview` (serve the build).
 

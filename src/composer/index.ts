@@ -5,6 +5,12 @@ export interface ComposeRequest {
   bpm?: number;
   duration?: number;
   modelOverride?: string;
+  /**
+   * Active persona instrument categories. The server turns these into an
+   * "Active performers" instruction so the model writes a part only for the
+   * live personas (keeps the per-instrument stage animation honest).
+   */
+  roles?: Array<'drums' | 'bass' | 'keys' | 'horns'>;
 }
 
 export interface ComposeResult {

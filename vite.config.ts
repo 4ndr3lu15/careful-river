@@ -12,7 +12,7 @@ import { composeHandler } from './server/compose-handler';
  */
 function composeApi(): Plugin {
   return {
-    name: 'banda-virtual:compose-api',
+    name: 'virtual.band:compose-api',
     configureServer(server) {
       server.middlewares.use('/api/compose', (req, res, next) => {
         composeHandler(req, res).catch(next);
