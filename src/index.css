@@ -443,6 +443,19 @@ body {
   display: none;
 }
 
+.field-label {
+  display: block;
+  margin-top: 0.75rem;
+  color: var(--text-faint);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.advanced .btn {
+  margin-top: 0.75rem;
+}
+
 .input {
   width: 100%;
   margin-top: 0.5rem;

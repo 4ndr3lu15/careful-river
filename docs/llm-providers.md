@@ -113,6 +113,35 @@ For demos, comparison runs, or "this model is being weird, let me try another":
 
 For per-call override without restarting dev — pass `modelOverride` in the `ComposeRequest`. Useful from `.claude/skills/compose-experiment/SKILL.md`.
 
+## Dev provider override (dev only)
+
+For fast A/B testing of providers and models **without editing `.env.local` or
+restarting the dev server**, the running app exposes a dev-only override form.
+
+- Open the **Composer** panel → expand **"Dev · provider override"** (only
+  rendered when `import.meta.env.DEV`, i.e. under `pnpm dev`).
+- Pick a provider preset (OpenRouter, DeepSeek, OpenAI, or **Custom** for any
+  OpenAI-compatible base URL), paste that provider's API key, and set the model
+  id. The selection is sent with each Compose call as a `devOverride` on the
+  `ComposeRequest`.
+- The server (`server/compose-handler.ts` → `resolveModel()`) builds a one-off
+  model via `@ai-sdk/openai-compatible` and **bypasses the env path** for that
+  call. It logs `[compose] dev-override <provider>/<model>`.
+
+Persistence and safety:
+
+- The selection (including the key) is stored in `localStorage` under
+  `virtualband.devOverride`, so it survives reloads during a dev session. Use
+  **Clear override** to wipe it. Treat it like any plaintext local secret.
+- **Production guard.** The form is compiled out of `pnpm build`, and the server
+  ignores any client `devOverride` when `NODE_ENV === 'production'`. The
+  serverless redeploy never trusts a client-supplied key (hard rule #1).
+- The registry of presets lives in `src/composer/providers.ts` — add a row to
+  extend it.
+
+This is a testing convenience; it does **not** replace the env path. A reviewer
+cloning the repo still configures `.env.local` as below.
+
 ## Cost guardrails
 
 - `maxOutputTokens: 1024` per call. Strudel snippets are always tiny.

@@ -7,8 +7,8 @@
  *  - composer result (code/model/status/error), driven by tapping a PresetPanel
  *    card — there is no free-text prompt anymore.
  */
-import { useCallback, useState } from 'react';
-import { compose, ComposeError } from '../composer';
+import { useCallback, useEffect, useState } from 'react';
+import { compose, ComposeError, type DevOverride } from '../composer';
 import { BAND, type PersonaInstrument } from '../band';
 import { PresetPanel } from './PresetPanel';
 import { BandLegend } from './BandLegend';
@@ -20,8 +20,28 @@ export type ComposerStatus = 'idle' | 'composing' | 'ready' | 'error';
 
 const ALL_INSTRUMENTS = BAND.map((p) => p.instrument);
 
+const DEV_OVERRIDE_KEY = 'virtualband.devOverride';
+
+/** Dev-only: load a persisted provider override from localStorage. */
+function loadDevOverride(): DevOverride | null {
+  if (!import.meta.env.DEV) return null;
+  try {
+    const raw = localStorage.getItem(DEV_OVERRIDE_KEY);
+    return raw ? (JSON.parse(raw) as DevOverride) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A dev override only takes effect once it has the bits needed to call out. */
+function isUsableOverride(o: DevOverride | null): o is DevOverride {
+  if (!o || !o.apiKey.trim() || !o.model.trim()) return false;
+  if (o.provider === 'custom' && !o.baseURL?.trim()) return false;
+  return true;
+}
+
 export function App() {
-  const [modelOverride, setModelOverride] = useState('');
+  const [devOverride, setDevOverride] = useState<DevOverride | null>(() => loadDevOverride());
   const [status, setStatus] = useState<ComposerStatus>('idle');
   const [code, setCode] = useState<string | null>(null);
   const [model, setModel] = useState<string | null>(null);
@@ -29,6 +49,20 @@ export function App() {
   const [activeInstruments, setActiveInstruments] = useState<Set<PersonaInstrument>>(
     () => new Set(ALL_INSTRUMENTS),
   );
+
+  // Dev-only: persist the provider override so it survives reloads.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    try {
+      if (devOverride) {
+        localStorage.setItem(DEV_OVERRIDE_KEY, JSON.stringify(devOverride));
+      } else {
+        localStorage.removeItem(DEV_OVERRIDE_KEY);
+      }
+    } catch {
+      // Ignore storage errors (private mode, quota) — override stays in memory.
+    }
+  }, [devOverride]);
 
   const toggleInstrument = useCallback((instrument: PersonaInstrument) => {
     setActiveInstruments((prev) => {
@@ -49,12 +83,13 @@ export function App() {
       setStatus('composing');
       setError(null);
 
-      const trimmedOverride = modelOverride.trim();
       try {
         const result = await compose({
           prompt,
           roles: [...activeInstruments],
-          ...(trimmedOverride ? { modelOverride: trimmedOverride } : {}),
+          ...(import.meta.env.DEV && isUsableOverride(devOverride)
+            ? { devOverride }
+            : {}),
         });
         setCode(result.code);
         setModel(result.model);
@@ -68,7 +103,7 @@ export function App() {
         setStatus('error');
       }
     },
-    [activeInstruments, modelOverride, status],
+    [activeInstruments, devOverride, status],
   );
 
   return (
@@ -94,8 +129,8 @@ export function App() {
             code={code}
             model={model}
             error={error}
-            modelOverride={modelOverride}
-            onModelOverrideChange={setModelOverride}
+            devOverride={devOverride}
+            onDevOverrideChange={setDevOverride}
           />
         </div>
         <div>

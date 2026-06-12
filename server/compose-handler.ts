@@ -4,7 +4,9 @@ import { generateText } from 'ai';
 import type { LanguageModel } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { createDeepSeek } from '@ai-sdk/deepseek';
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { z } from 'zod';
+import { findPreset } from '../src/composer/providers';
 
 const PERSONA_INSTRUMENTS = ['drums', 'bass', 'keys', 'horns'] as const;
 type PersonaInstrument = (typeof PERSONA_INSTRUMENTS)[number];
@@ -17,11 +19,19 @@ const PERSONA_NAMES: Record<PersonaInstrument, string> = {
   horns: 'NOVA',
 };
 
+const devOverrideSchema = z.object({
+  provider: z.string().trim().min(1),
+  apiKey: z.string().trim().min(1),
+  model: z.string().trim().min(1),
+  baseURL: z.string().trim().url().optional(),
+});
+
 const composeRequestSchema = z.object({
   prompt: z.string().trim().min(1),
   bpm: z.number().finite().positive().optional(),
   duration: z.number().finite().positive().optional(),
   modelOverride: z.string().trim().min(1).optional(),
+  devOverride: devOverrideSchema.optional(),
   roles: z.array(z.enum(PERSONA_INSTRUMENTS)).optional(),
 });
 
@@ -164,6 +174,13 @@ export async function composeHandler(
 }
 
 function resolveModel(request: ComposeRequest): { languageModel: LanguageModel; modelId: string } {
+  // Dev-only escape hatch: a client may supply its own provider/key/model.
+  // NEVER honored in production — hard rule #1 (the serverless redeploy must
+  // not trust a client-supplied key).
+  if (process.env.NODE_ENV !== 'production' && request.devOverride) {
+    return resolveDevOverride(request.devOverride);
+  }
+
   const provider = (process.env.COMPOSE_PROVIDER ?? 'openrouter').toLowerCase().trim();
 
   if (provider === 'deepseek') {
@@ -184,6 +201,26 @@ function resolveModel(request: ComposeRequest): { languageModel: LanguageModel; 
     },
   });
   return { languageModel: openrouter(modelId), modelId };
+}
+
+/**
+ * Build a one-off OpenAI-compatible model from a dev override. The base URL
+ * comes from the request (custom provider) or the shared preset table.
+ */
+function resolveDevOverride(
+  override: NonNullable<ComposeRequest['devOverride']>,
+): { languageModel: LanguageModel; modelId: string } {
+  const baseURL = override.baseURL?.trim() || findPreset(override.provider)?.baseURL;
+  if (!baseURL) {
+    throw new Error(`No base URL for provider "${override.provider}".`);
+  }
+  console.log(`[compose] dev-override ${override.provider}/${override.model}`);
+  const client = createOpenAICompatible({
+    name: override.provider,
+    apiKey: override.apiKey,
+    baseURL,
+  });
+  return { languageModel: client(override.model), modelId: override.model };
 }
 
 function sendJson(res: ServerResponse, status: number, body: unknown): void {

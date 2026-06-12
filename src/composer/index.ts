@@ -1,10 +1,20 @@
 import { z } from 'zod';
+import type { DevOverride } from './providers';
+
+export type { DevOverride, ProviderPreset } from './providers';
+export { PROVIDER_PRESETS, findPreset } from './providers';
 
 export interface ComposeRequest {
   prompt: string;
   bpm?: number;
   duration?: number;
   modelOverride?: string;
+  /**
+   * Dev-only provider/key/model override. Honored by the server only when
+   * NODE_ENV !== 'production'; ignored in the production build. See
+   * src/composer/providers.ts.
+   */
+  devOverride?: DevOverride;
   /**
    * Active persona instrument categories. The server turns these into an
    * "Active performers" instruction so the model writes a part only for the
