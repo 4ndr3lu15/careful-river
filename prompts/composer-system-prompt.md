@@ -4,6 +4,8 @@ Sent as the `system` parameter on every call to `/api/compose`. The user's natur
 
 This file is read by the server-side compose handler. The handler ignores everything before the `## PROMPT` marker and sends everything after it (until the closing marker) as the system message.
 
+**Runtime augmentation:** the handler appends a *per-persona Strudel reference* to this system prompt, built from `src/composer/persona-docs.ts` for only the personas active in the request (see the `roles` field). That's why the "Personas" table below is intentionally terse — the detailed, idiomatic Strudel docs for each performer are injected dynamically so weaker models get worked examples for exactly the parts they must write. Edit the per-instrument docs there, not here.
+
 ---
 
 ## PROMPT

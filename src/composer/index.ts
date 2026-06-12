@@ -3,6 +3,7 @@ import type { DevOverride } from './providers';
 
 export type { DevOverride, ProviderPreset } from './providers';
 export { PROVIDER_PRESETS, findPreset } from './providers';
+export { buildPersonaDocs } from './persona-docs';
 
 export interface ComposeRequest {
   prompt: string;
