@@ -7,13 +7,13 @@
  * agent's category schedules a "pulse" at `startTime - audioContext.currentTime`
  * (AGENTS.md rule 2), which drives both a scale pop and an emissive flash.
  *
- * Agents are toggleable: clicking the character calls `onToggle`. An inactive
- * agent is dimmed, does not pulse, and (via the composer) is left out of the
- * generated music. Position comes from the parent — the roster is dynamic, so
- * the layout depends on how many agents are on stage.
+ * Left-click the character to mute/un-mute its part (`onMute`); right-click to
+ * open its info card (`onInfo`). A muted agent is dimmed, does not pulse, and is
+ * silenced in the running pattern. Position comes from the parent — only the
+ * agents currently on stage are rendered, so the layout depends on how many.
  */
 import { Text } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Color, MeshStandardMaterial, type Group } from 'three';
 import type { BandAgent } from '../band';
@@ -23,8 +23,9 @@ import { audioContext, events } from '../musician';
 interface MusicianProps {
   agent: BandAgent;
   position: readonly [number, number, number];
-  active: boolean;
-  onToggle: (agentId: string) => void;
+  muted: boolean;
+  onMute: (agentId: string) => void;
+  onInfo: (agent: BandAgent) => void;
 }
 
 const PULSE_SCALE = 0.16;
@@ -33,7 +34,8 @@ const EMISSIVE_IDLE = 0.55;
 const EMISSIVE_FLASH = 2.6;
 const EMISSIVE_DIM = 0.12;
 
-export function Musician({ agent, position, active, onToggle }: MusicianProps) {
+export function Musician({ agent, position, muted, onMute, onInfo }: MusicianProps) {
+  const active = !muted;
   const groupRef = useRef<Group | null>(null);
   const pulse = useRef(0);
   const [hovered, setHovered] = useState(false);
@@ -92,9 +94,15 @@ export function Musician({ agent, position, active, onToggle }: MusicianProps) {
       (EMISSIVE_FLASH - EMISSIVE_IDLE) * p;
   });
 
-  const handleClick = (event: { stopPropagation: () => void }) => {
+  const handleClick = (event: ThreeEvent<MouseEvent>) => {
     event.stopPropagation();
-    onToggle(agent.id);
+    onMute(agent.id);
+  };
+
+  const handleContextMenu = (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation();
+    event.nativeEvent.preventDefault();
+    onInfo(agent);
   };
 
   const handleOver = (event: { stopPropagation: () => void }) => {
@@ -112,6 +120,7 @@ export function Musician({ agent, position, active, onToggle }: MusicianProps) {
       ref={groupRef}
       position={position as [number, number, number]}
       onClick={handleClick}
+      onContextMenu={handleContextMenu}
       onPointerOver={handleOver}
       onPointerOut={handleOut}
     >
@@ -140,7 +149,7 @@ export function Musician({ agent, position, active, onToggle }: MusicianProps) {
           outlineWidth={0.008}
           outlineColor="#05060f"
         >
-          {active ? agent.role : 'muted — click to enable'}
+          {active ? agent.role : 'muted — click to un-mute'}
         </Text>
       )}
     </group>

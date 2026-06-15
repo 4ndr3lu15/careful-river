@@ -17,6 +17,8 @@ import type { StrudelHap, StrudelValue } from '@strudel/web';
 import type { NoteEvent } from '../types';
 import { classifyInstrument } from './instrument-map';
 
+export { buildPlayable, countStackParts } from './stack-parts';
+
 /**
  * The shared Web Audio clock. `stage/` schedules animations against this same
  * `currentTime`, which is how audio and visuals stay in sync (AGENTS.md hard
