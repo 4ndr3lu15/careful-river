@@ -6,11 +6,11 @@ If you are a coding agent reading this for the first time, read it end-to-end be
 
 ## Project in one paragraph
 
-`virtual.band` is a WebXR + LLM proof of concept: a model-agnostic composer agent generates [Strudel](https://strudel.cc) code at runtime; the browser executes it; a Three.js / React Three Fiber scene animates four toy musicians in sync with the audio; the same build runs on desktop browsers and on Meta Quest / Wolvic. The aim is a reproducible demo for a conference publication — not a polished product.
+`virtual.band` is a WebXR + LLM proof of concept: a model-agnostic composer agent generates [Strudel](https://strudel.cc) code at runtime; the browser executes it; a Three.js / React Three Fiber scene animates a roster of toy musicians in sync with the audio; the same build runs on desktop browsers and on Meta Quest / Wolvic. The roster is user-definable at runtime: the user creates **agents** (band members, each bound to one of the four instrument categories) and **vibes** (one-tap scene briefs that pick a lineup and prompt the composer). The aim is a reproducible demo for a conference publication — not a polished product.
 
 ## Target audience for the demo
 
-A reviewer who clones the repo, runs `pnpm install && pnpm dev`, opens `https://localhost:5173`, types a prompt, presses Compose, presses Play, hears music, sees four characters animate, and optionally presses Enter VR. End-to-end in under 10 minutes from clone.
+A reviewer who clones the repo, runs `pnpm install && pnpm dev`, opens `https://localhost:5173`, taps a vibe card (or edits the agents/vibes first), waits for the compose, presses Play, hears music, sees the characters animate, and optionally presses Enter VR. End-to-end in under 10 minutes from clone.
 
 ## Stack and conventions
 
@@ -48,7 +48,8 @@ src/
 ├── composer/        # natural language → Strudel code, via OpenRouter
 ├── musician/        # Strudel runtime + NoteEvent emitter
 ├── stage/           # 3D scene + WebXR
-├── app/             # React UI glue
+├── app/             # React UI glue (vibe cards, legend, agent/vibe editor forms)
+├── band.ts          # agent + vibe data model (shared by app/ and stage/)
 ├── types.ts         # NoteEvent + shared types
 └── main.tsx         # entry point
 

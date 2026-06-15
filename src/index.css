@@ -228,7 +228,7 @@ body {
   background: transparent;
 }
 
-/* ---- Preset cards ---- */
+/* ---- Vibe cards (.preset class names kept) ---- */
 
 .preset-grid {
   display: grid;
@@ -237,26 +237,60 @@ body {
 }
 
 .preset {
+  position: relative;
   text-align: left;
   font-family: var(--font-ui);
   color: var(--text);
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0));
   border: 1px solid var(--panel-border);
   border-radius: var(--radius);
-  padding: 0.85rem 0.95rem;
-  cursor: pointer;
   transition: transform 0.12s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.preset:hover:not(:disabled) {
+.preset:hover {
   transform: translateY(-2px);
   border-color: var(--preset-accent, var(--accent));
   box-shadow: 0 0 24px -8px var(--preset-accent, var(--accent));
 }
 
-.preset:disabled {
+/* The card's main hit area — fills the card, edit button floats on top. */
+.preset__hit {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.85rem 0.95rem;
+  cursor: pointer;
+}
+
+.preset__hit:disabled {
   opacity: 0.5;
   cursor: progress;
+}
+
+.preset__edit {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.45rem;
+}
+
+.preset__lineup {
+  margin-top: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.5px;
+  color: var(--text-faint);
+}
+
+.preset--add {
+  padding: 0.85rem 0.95rem;
+  cursor: pointer;
+  background: none;
+  border-style: dashed;
 }
 
 .preset__name {
@@ -285,17 +319,31 @@ body {
 .legend__row {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.4rem;
   width: 100%;
-  text-align: left;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--panel-border);
   border-left: 3px solid var(--row-accent, var(--accent));
   border-radius: 10px;
   padding: 0.55rem 0.8rem;
-  cursor: pointer;
   color: var(--text);
   transition: background 0.16s ease, opacity 0.16s ease, box-shadow 0.16s ease;
+}
+
+/* The row's main hit area — toggles live/muted; the edit button sits beside. */
+.legend__hit {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .legend__row:hover {
@@ -343,6 +391,137 @@ body {
 
 .legend__row[data-active='true'] .legend__state {
   color: var(--row-accent, var(--accent));
+}
+
+.legend__add {
+  margin-top: 0.8rem;
+  width: 100%;
+}
+
+/* ---- Small icon buttons (edit pencils) ---- */
+
+.icon-btn {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font-size: 0.8rem;
+  color: var(--text-faint);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  box-shadow: 0 0 14px -6px var(--accent);
+}
+
+/* ---- Modal + editor forms ---- */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background: rgba(3, 4, 10, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.modal {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+}
+
+.modal__close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+}
+
+.modal__close:hover {
+  color: var(--text);
+}
+
+.form .field-label {
+  margin-top: 0.9rem;
+}
+
+.form .field-label:first-child {
+  margin-top: 0;
+}
+
+.form__row {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-end;
+}
+
+.form textarea.input {
+  resize: vertical;
+  font-family: var(--font-ui);
+}
+
+.form select.input {
+  font-family: var(--font-ui);
+}
+
+.input--color {
+  width: 64px;
+  height: 38px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.form__agents {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.form__agents legend {
+  padding: 0 0.4rem;
+}
+
+.form__agent {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.92rem;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+}
+
+.form__agent input[type='checkbox'] {
+  accent-color: var(--row-accent, var(--accent));
+}
+
+.form__actions {
+  margin-top: 1.2rem;
+}
+
+.roster-reset {
+  margin-top: 1.3rem;
+  width: 100%;
+  font-size: 0.7rem;
+  opacity: 0.7;
 }
 
 /* ---- Controls row ---- */

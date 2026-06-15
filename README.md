@@ -39,7 +39,7 @@ You describe a vibe in natural language → an LLM picks a model and writes Stru
 
 ## Getting started
 
-> **Status:** Sprints 0–5 done; Sprint 6 (polish) in progress. You can compose via OpenRouter, see Strudel code, press Play for audio, watch the 3D stage pulse in sync, swap models per-compose from the UI, and use Enter VR on WebXR-capable browsers. Invalid patterns and provider errors surface in the UI; Stop always silences a running pattern.
+> **Status:** Sprints 0–5 done; Sprint 6 (polish) in progress. You tap a **vibe** card to compose via OpenRouter (no free-text prompt), see Strudel code, press Play for audio, watch the 3D stage pulse in sync, swap models per-compose from the UI, and use Enter VR on WebXR-capable browsers. The roster is user-definable: create/edit **agents** (band members) and **vibes** (scene briefs + lineup), persisted to localStorage. Invalid patterns and provider errors surface in the UI; Stop always silences a running pattern.
 
 Prerequisites: Node ≥ 20 and `pnpm` (`corepack enable` provides it).
 
