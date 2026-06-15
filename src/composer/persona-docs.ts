@@ -19,9 +19,7 @@
 import type { PersonaInstrument } from '../band';
 
 interface PersonaDoc {
-  /** On-stage persona name (mirrors `band.ts`). */
-  persona: string;
-  /** One-line reminder of the persona's musical job. */
+  /** One-line reminder of this category's musical job. */
   role: string;
   /** Markdown body: the Strudel idioms + worked snippets for this part. */
   body: string;
@@ -35,7 +33,6 @@ const PERSONA_ORDER: readonly PersonaInstrument[] = ['drums', 'bass', 'keys', 'h
 
 const PERSONA_DOCS: Record<PersonaInstrument, PersonaDoc> = {
   drums: {
-    persona: 'VOLT',
     role: 'percussion — the only part that uses bare `s(...)`, never `note(...)`',
     body: `
 **Sounds (drum samples, use inside \`s("...")\`):** \`bd\` kick, \`sd\` snare, \`hh\` closed hat, \`oh\` open hat, \`cp\` clap, \`cb\` cowbell, \`rim\` rimshot, \`tom\` tom.
@@ -52,7 +49,6 @@ const PERSONA_DOCS: Record<PersonaInstrument, PersonaDoc> = {
 **Rules for this part:** drums are triggered with \`s(...)\`, NOT \`note(...)\`. \`~\` is a rest. Keep gain around \`0.7\`. Do not put pitch names (\`c3\`, \`e4\`) in the drum pattern.`,
   },
   bass: {
-    persona: 'ABYSS',
     role: 'low end — one note at a time, deep octaves',
     body: `
 **Sound:** \`note("...").s("sawtooth")\` is the safe default (always available). \`s("bass")\` if you want a rounder tone. Tame the buzz with \`.lpf(400)\`–\`.lpf(900)\`.
@@ -68,7 +64,6 @@ const PERSONA_DOCS: Record<PersonaInstrument, PersonaDoc> = {
 **Rules for this part:** monophonic — one pitch per step, no chords (no commas inside the brackets). Always wrap pitches in \`note(...)\`; \`s(...)\` alone gives a drum sound. Use only \`s("sawtooth")\` or \`s("bass")\` — other synths (\`sine\`, \`triangle\`) make the wrong character move on stage. Keep it low and out of the keys' register.`,
   },
   keys: {
-    persona: 'ORACLE',
     role: 'harmony — chords and comping',
     body: `
 **Sounds:** \`s("piano")\`, \`s("rhodes")\`, or \`s("epiano")\`. Pattern is always \`note("...").s("piano")\`.
@@ -84,7 +79,6 @@ const PERSONA_DOCS: Record<PersonaInstrument, PersonaDoc> = {
 **Rules for this part:** chords use COMMAS inside \`[...]\` (\`[c3,e3,g3]\`); a space (\`[c3 e3 g3]\`) is an arpeggio, not a chord. Always \`note(...)\`, gain ~\`0.5\` so chords don't mask the melody.`,
   },
   horns: {
-    persona: 'NOVA',
     role: 'lead / melody — single-line, leaves space',
     body: `
 **Sounds:** ALWAYS use \`s("gm_alto_sax")\` or \`s("gm_trumpet")\`. If the soundfont isn't loaded Strudel silently swaps a synth for the *audio*, but the \`gm_*\` name is what tells the stage this is the brass performer — so keep the name even when you want a synthier tone, and shape it with \`.attack(0.02).release(0.2)\`. Do NOT write \`s("sawtooth")\`/\`s("triangle")\` here: those make the bass or no character move instead of the horn.
@@ -119,7 +113,7 @@ export function buildPersonaDocs(roles?: readonly PersonaInstrument[]): string {
 
   const sections = active.map((cat) => {
     const doc = PERSONA_DOCS[cat];
-    return `### ${doc.persona} — ${cat} (${doc.role})\n${doc.body.trim()}`;
+    return `### ${cat} — ${doc.role}\n${doc.body.trim()}`;
   });
 
   return [

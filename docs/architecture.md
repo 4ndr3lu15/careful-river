@@ -12,8 +12,8 @@
 │                                                                  │
 │  ┌──────────────────────┐                                        │
 │  │   UI (React)         │                                        │
-│  │   - prompt input     │                                        │
-│  │   - Compose button   │                                        │
+│  │   - vibe cards       │                                        │
+│  │   - agent/vibe forms │                                        │
 │  │   - Play/Stop        │  ─── handlers call ───┐                │
 │  │   - Enter VR         │                       │                │
 │  │   - code panel       │                       ▼                │
@@ -81,11 +81,19 @@ Each top-level folder under `src/` is a module. Each module exposes a small publ
 **Public interface:**
 
 ```ts
+export interface AgentSpec {
+  name: string;
+  instrument: 'drums' | 'bass' | 'keys' | 'horns';
+  style?: string;          // free-form per-part instruction
+}
+
 export interface ComposeRequest {
-  prompt: string;
-  bpm?: number;      // optional hint
-  duration?: number; // optional hint, seconds
+  prompt: string;          // the vibe's natural-language brief
+  bpm?: number;            // optional hint
+  duration?: number;       // optional hint, seconds
   modelOverride?: string;  // optional, e.g. "openai/gpt-4o" — wins over env
+  agents?: AgentSpec[];    // active lineup; server writes one part per agent
+  roles?: Array<'drums' | 'bass' | 'keys' | 'horns'>;  // legacy form of agents
 }
 
 export interface ComposeResult {
@@ -146,30 +154,45 @@ const INSTRUMENT_MAP: Record<string, NoteEvent['instrument']> = {
 };
 ```
 
+### `src/band.ts`
+
+**Responsibility:** the agent + vibe data model, shared by `app/` and `stage/`. A top-level module like `types.ts`: both modules import it, neither reaches into the other.
+
+- `BandAgent` — a user-definable band member: `id`, `instrument` (one of the four categories — the stable contract that drives the stage animation), `name`, `role`, `accent`, `style`.
+- `Vibe` — a user-definable scene brief: `id`, `name`, `description`, `accent`, `prompt`, and `agentIds` (the lineup; empty = whole roster).
+- `DEFAULT_AGENTS` / `DEFAULT_VIBES` — the seed roster (the original four personas + six vibes).
+- Helpers: `agentsForVibe`, `stagePosition` (dynamic left→right arc), `makeId`.
+
+The roster is persisted to localStorage via `app/roster-storage.ts`.
+
 ### `src/stage/`
 
 **Responsibility:** render the 3D scene, subscribe to events, animate characters.
 
 **Components (in `src/stage/`):**
 
-- `Stage.tsx` — orchestrator; sets up Canvas + XR, positions characters
-- `Musician.tsx` — generic character; subscribes to its instrument's events and animates
-- `Floor.tsx` — reference plane
+- `Stage.tsx` — orchestrator; sets up Canvas + XR, lays out characters via `stagePosition`
+- `Musician.tsx` — generic character; subscribes to its agent's instrument events and animates
+- `Environment.tsx` — bar/stage scenery
 - `VRButton.tsx` — Enter VR
 
-Each `<Musician>` receives `instrument` as a prop and uses `useEffect` to subscribe to `events.addEventListener('note', handler)` with a filter on its instrument.
+`Stage` maps the current `agents` array to `<Musician>`s; each receives its `agent` plus a computed `position` and uses `useEffect` to subscribe to `events.addEventListener('note', handler)` filtered on `agent.instrument`.
 
 ### `src/app/`
 
-**Responsibility:** glue. React UI, current composition state, button handlers.
+**Responsibility:** glue. React UI, roster + composition state, button handlers.
 
 `App.tsx` holds:
 
-- `prompt: string` (controlled input)
+- `roster: { agents, vibes }` (seeded from defaults, persisted to localStorage)
+- `activeAgentIds: Set<string>` (which agents are live on stage)
+- `editor` (which agent/vibe edit modal is open, if any)
 - `code: string | null` (latest generated code)
 - `model: string | null` (which model actually answered, for the UI)
-- `status: 'idle' | 'composing' | 'ready' | 'playing' | 'error'`
+- `status: 'idle' | 'composing' | 'ready' | 'error'`
 - `error: string | null`
+
+There is no free-text prompt: tapping a vibe card assembles the prompt from the vibe's brief plus each active agent's `style`. Agents and vibes are created/edited via the `AgentForm` / `VibeForm` modals (`Modal.tsx`).
 
 ## The event contract (heart of the sync)
 
@@ -211,12 +234,12 @@ Details and the full model list are in `docs/llm-providers.md`.
 ## Initialization flow
 
 ```
-1. App mounts
-2. UI renders (input + buttons)
+1. App mounts; roster loads from localStorage (seeded with defaults)
+2. UI renders (vibe cards + buttons)
 3. stage/ initializes three.js scene (canvas hidden until first compose)
 4. musician/.init() loads @strudel/web + default samples   ← can take 1–3 s
-5. User types a prompt, clicks Compose
-6. composer/.compose(prompt) → POST /api/compose
+5. User taps a vibe card (lineup goes live on stage)
+6. composer/.compose({ prompt, agents }) → POST /api/compose
 7. Middleware injects key, calls OpenRouter via Vercel AI SDK
 8. Response returns, composer validates shape
 9. App sets state.code = result.code; the code panel renders

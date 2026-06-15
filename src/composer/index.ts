@@ -5,6 +5,18 @@ export type { DevOverride, ProviderPreset } from './providers';
 export { PROVIDER_PRESETS, findPreset } from './providers';
 export { buildPersonaDocs } from './persona-docs';
 
+/**
+ * One performer in the compose request. The final prompt is assembled from the
+ * vibe's brief plus one of these per active agent: the server lists each agent
+ * by name/category and appends its `style` instruction.
+ */
+export interface AgentSpec {
+  name: string;
+  instrument: 'drums' | 'bass' | 'keys' | 'horns';
+  /** Free-form musical instruction for this agent's part. */
+  style?: string;
+}
+
 export interface ComposeRequest {
   prompt: string;
   bpm?: number;
@@ -17,9 +29,15 @@ export interface ComposeRequest {
    */
   devOverride?: DevOverride;
   /**
-   * Active persona instrument categories. The server turns these into an
-   * "Active performers" instruction so the model writes a part only for the
-   * live personas (keeps the per-instrument stage animation honest).
+   * Active performers. The server turns these into an "Active performers"
+   * instruction (one part per agent, styled per its `style`) and injects the
+   * per-category Strudel docs for exactly the categories present (keeps the
+   * per-instrument stage animation honest).
+   */
+  agents?: AgentSpec[];
+  /**
+   * Legacy form of `agents`: bare instrument categories with the default
+   * persona names. Ignored when `agents` is present.
    */
   roles?: Array<'drums' | 'bass' | 'keys' | 'horns'>;
 }

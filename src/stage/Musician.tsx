@@ -1,28 +1,30 @@
 /**
- * Musician — one futuristic persona on stage.
+ * Musician — one futuristic agent on stage.
  *
- * Each persona is built from Three.js primitives (a shared humanoid base + a
- * role-specific instrument prop). The visual reaction to audio is unchanged in
+ * Each agent is built from Three.js primitives (a shared humanoid base + an
+ * instrument-specific prop). The visual reaction to audio is unchanged in
  * spirit from the original box: a `NoteEvent` whose `instrument` matches this
- * persona schedules a "pulse" at `startTime - audioContext.currentTime`
+ * agent's category schedules a "pulse" at `startTime - audioContext.currentTime`
  * (AGENTS.md rule 2), which drives both a scale pop and an emissive flash.
  *
- * Personas are toggleable: clicking the character calls `onToggle`. An inactive
- * persona is dimmed, does not pulse, and (via the composer) is left out of the
- * generated music.
+ * Agents are toggleable: clicking the character calls `onToggle`. An inactive
+ * agent is dimmed, does not pulse, and (via the composer) is left out of the
+ * generated music. Position comes from the parent — the roster is dynamic, so
+ * the layout depends on how many agents are on stage.
  */
 import { Text } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Color, MeshStandardMaterial, type Group } from 'three';
-import type { Persona } from '../band';
+import type { BandAgent } from '../band';
 import type { NoteCustomEvent } from '../types';
 import { audioContext, events } from '../musician';
 
 interface MusicianProps {
-  persona: Persona;
+  agent: BandAgent;
+  position: readonly [number, number, number];
   active: boolean;
-  onToggle: (instrument: Persona['instrument']) => void;
+  onToggle: (agentId: string) => void;
 }
 
 const PULSE_SCALE = 0.16;
@@ -31,25 +33,25 @@ const EMISSIVE_IDLE = 0.55;
 const EMISSIVE_FLASH = 2.6;
 const EMISSIVE_DIM = 0.12;
 
-export function Musician({ persona, active, onToggle }: MusicianProps) {
+export function Musician({ agent, position, active, onToggle }: MusicianProps) {
   const groupRef = useRef<Group | null>(null);
   const pulse = useRef(0);
   const [hovered, setHovered] = useState(false);
 
-  // One emissive material shared by every glowing part of this persona, so a
+  // One emissive material shared by every glowing part of this agent, so a
   // hit flashes the whole character with a single property write per frame.
   const material = useMemo(
     () =>
       new MeshStandardMaterial({
         color: new Color('#0a0d1c'),
-        emissive: new Color(persona.accent),
+        emissive: new Color(agent.accent),
         emissiveIntensity: EMISSIVE_IDLE,
         metalness: 0.6,
         roughness: 0.35,
         transparent: true,
         opacity: 1,
       }),
-    [persona.accent],
+    [agent.accent],
   );
   useEffect(() => () => material.dispose(), [material]);
 
@@ -57,7 +59,7 @@ export function Musician({ persona, active, onToggle }: MusicianProps) {
     const timeouts = new Set<number>();
     const handler = (event: Event) => {
       const { detail } = event as NoteCustomEvent;
-      if (detail.instrument !== persona.instrument) return;
+      if (detail.instrument !== agent.instrument) return;
       const delayMs = (detail.startTime - audioContext.currentTime) * 1000;
       const timeoutId = window.setTimeout(() => {
         pulse.current = 1;
@@ -70,7 +72,7 @@ export function Musician({ persona, active, onToggle }: MusicianProps) {
       events.removeEventListener('note', handler);
       timeouts.forEach((id) => window.clearTimeout(id));
     };
-  }, [persona.instrument]);
+  }, [agent.instrument]);
 
   useFrame((_, delta) => {
     if (!active) {
@@ -92,7 +94,7 @@ export function Musician({ persona, active, onToggle }: MusicianProps) {
 
   const handleClick = (event: { stopPropagation: () => void }) => {
     event.stopPropagation();
-    onToggle(persona.instrument);
+    onToggle(agent.id);
   };
 
   const handleOver = (event: { stopPropagation: () => void }) => {
@@ -108,14 +110,14 @@ export function Musician({ persona, active, onToggle }: MusicianProps) {
   return (
     <group
       ref={groupRef}
-      position={persona.position as [number, number, number]}
+      position={position as [number, number, number]}
       onClick={handleClick}
       onPointerOver={handleOver}
       onPointerOut={handleOut}
     >
       <Humanoid material={material} />
-      <RoleProp instrument={persona.instrument} material={material} />
-      <StagePad accent={persona.accent} active={active} />
+      <RoleProp instrument={agent.instrument} material={material} />
+      <StagePad accent={agent.accent} active={active} />
 
       <Text
         position={[0, 2.35, 0]}
@@ -126,19 +128,19 @@ export function Musician({ persona, active, onToggle }: MusicianProps) {
         outlineWidth={0.012}
         outlineColor="#05060f"
       >
-        {persona.name}
+        {agent.name}
       </Text>
       {(hovered || !active) && (
         <Text
           position={[0, 2.02, 0]}
           fontSize={0.15}
-          color={persona.accent}
+          color={agent.accent}
           anchorX="center"
           anchorY="middle"
           outlineWidth={0.008}
           outlineColor="#05060f"
         >
-          {active ? persona.role : 'muted — click to enable'}
+          {active ? agent.role : 'muted — click to enable'}
         </Text>
       )}
     </group>
@@ -174,12 +176,12 @@ function Humanoid({ material }: { material: MeshStandardMaterial }) {
   );
 }
 
-/** Instrument-specific silhouette that makes each persona recognisable. */
+/** Instrument-specific silhouette that makes each agent recognisable. */
 function RoleProp({
   instrument,
   material,
 }: {
-  instrument: Persona['instrument'];
+  instrument: BandAgent['instrument'];
   material: MeshStandardMaterial;
 }) {
   switch (instrument) {

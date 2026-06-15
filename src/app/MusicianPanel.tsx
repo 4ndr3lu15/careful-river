@@ -86,7 +86,7 @@ export function MusicianPanel({ code }: MusicianPanelProps) {
 
       {code ? null : (
         <p className="muted" style={{ margin: '0 0 0.75rem' }}>
-          Pick a scene, then press Play.
+          Pick a vibe, then press Play.
         </p>
       )}
 

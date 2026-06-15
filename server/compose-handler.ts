@@ -12,7 +12,7 @@ import { buildPersonaDocs } from '../src/composer/persona-docs';
 const PERSONA_INSTRUMENTS = ['drums', 'bass', 'keys', 'horns'] as const;
 type PersonaInstrument = (typeof PERSONA_INSTRUMENTS)[number];
 
-/** Instrument category → on-stage persona name (mirrors src/band.ts). */
+/** Instrument category → default persona name (legacy `roles` requests only). */
 const PERSONA_NAMES: Record<PersonaInstrument, string> = {
   drums: 'VOLT',
   bass: 'ABYSS',
@@ -27,12 +27,20 @@ const devOverrideSchema = z.object({
   baseURL: z.string().trim().url().optional(),
 });
 
+/** A user-defined performer (see src/composer/index.ts → AgentSpec). */
+const agentSpecSchema = z.object({
+  name: z.string().trim().min(1).max(60),
+  instrument: z.enum(PERSONA_INSTRUMENTS),
+  style: z.string().trim().max(500).optional(),
+});
+
 const composeRequestSchema = z.object({
   prompt: z.string().trim().min(1),
   bpm: z.number().finite().positive().optional(),
   duration: z.number().finite().positive().optional(),
   modelOverride: z.string().trim().min(1).optional(),
   devOverride: devOverrideSchema.optional(),
+  agents: z.array(agentSpecSchema).max(16).optional(),
   roles: z.array(z.enum(PERSONA_INSTRUMENTS)).optional(),
 });
 
@@ -124,9 +132,9 @@ export async function composeHandler(
   let system: string;
   try {
     const basePrompt = await loadSystemPrompt();
-    // Append focused Strudel docs for only the personas that will play. Weaker
+    // Append focused Strudel docs for only the categories that will play. Weaker
     // models lean on these worked examples; strong models ignore the redundancy.
-    const personaDocs = buildPersonaDocs(requestBody.roles);
+    const personaDocs = buildPersonaDocs(activeCategories(requestBody));
     system = personaDocs ? `${basePrompt}\n\n${personaDocs}` : basePrompt;
   } catch (error) {
     sendJson(res, 500, {
@@ -294,6 +302,22 @@ async function loadSystemPrompt(): Promise<string> {
   return prompt;
 }
 
+/**
+ * Instrument categories that will actually play, in stable stage order.
+ * Derived from `agents` when present, else the legacy `roles` array.
+ */
+function activeCategories(request: ComposeRequest): PersonaInstrument[] | undefined {
+  if (request.agents && request.agents.length > 0) {
+    return PERSONA_INSTRUMENTS.filter((cat) =>
+      request.agents!.some((agent) => agent.instrument === cat),
+    );
+  }
+  if (request.roles && request.roles.length > 0) {
+    return PERSONA_INSTRUMENTS.filter((cat) => request.roles!.includes(cat));
+  }
+  return undefined;
+}
+
 function buildUserPrompt(request: ComposeRequest): string {
   const parts: string[] = [request.prompt.trim()];
   if (typeof request.bpm === 'number') {
@@ -303,7 +327,22 @@ function buildUserPrompt(request: ComposeRequest): string {
     parts.push(`Duration: ${Math.round(request.duration)} seconds.`);
   }
 
-  // De-dupe + keep a stable order, then map each category to its persona.
+  // The final prompt is vibe brief + one line per agent: each user-defined
+  // agent contributes its name, category and style instruction.
+  if (request.agents && request.agents.length > 0) {
+    const lines = request.agents.map((agent) => {
+      const style = agent.style?.trim();
+      return `- ${agent.name} (${agent.instrument})${style ? `: ${style}` : ''}`;
+    });
+    parts.push(
+      'Active performers — write EXACTLY one part per performer inside the stack, ' +
+        'using only their instrument categories, and omit every other instrument:\n' +
+        lines.join('\n'),
+    );
+    return parts.join('\n');
+  }
+
+  // Legacy form: bare categories with the default persona names.
   const roles = PERSONA_INSTRUMENTS.filter((cat) => request.roles?.includes(cat));
   if (roles.length > 0) {
     const performers = roles.map((cat) => `${PERSONA_NAMES[cat]} (${cat})`).join(', ');
