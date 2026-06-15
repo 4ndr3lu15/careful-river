@@ -27,6 +27,28 @@ export const PERSONA_INSTRUMENTS: readonly PersonaInstrument[] = [
   'horns',
 ];
 
+/** Rough rhythmic feel — a soft hint, not a hard rule. */
+export type AgentDensity = 'sparse' | 'medium' | 'busy';
+
+/**
+ * Per-agent sound rules — soft constraints on the palette this agent may emit,
+ * surfaced in the Builder form and folded into the composer prompt via
+ * `describeAgentRules`. These are guidance, not validation: the model is asked
+ * (not forced) to respect them, which keeps each agent recognisable on stage.
+ */
+export interface AgentSound {
+  /** Inclusive low octave the agent should stay in (pitched parts only). */
+  octaveLow: number;
+  /** Inclusive high octave the agent should stay in (pitched parts only). */
+  octaveHigh: number;
+  /** Allowed Strudel sounds/samples (subset of the category). Empty = no limit. */
+  sounds: string[];
+  /** Drum kit bank (drums only), e.g. `RolandTR909`. Empty = model's choice. */
+  bank?: string;
+  /** Rhythmic feel hint. */
+  density?: AgentDensity;
+}
+
 /** A user-definable band member. */
 export interface BandAgent {
   /** Stable id — referenced by vibes and the active-agent set. */
@@ -44,6 +66,82 @@ export interface BandAgent {
    * the vibe prompt, so the final prompt is assembled from vibe + agents.
    */
   style: string;
+  /**
+   * Optional sound rules (octaves / allowed sounds / feel). Optional so rosters
+   * saved before this field still load (see roster-storage `backfillSound`).
+   */
+  sound?: AgentSound;
+}
+
+/** One category's selectable sound palette. Mirrors `composer/persona-docs.ts`. */
+export interface SoundCatalogEntry {
+  /** Sound/sample ids the form offers (keep in sync with persona-docs). */
+  sounds: readonly string[];
+  /** Drum kit banks (drums only). */
+  banks?: readonly string[];
+  /** Whether this category is pitched (drums are not). */
+  hasOctaves: boolean;
+  /** Selectable octave bounds for the form's range inputs. */
+  octaveRange: [number, number];
+  /** Default octave low/high for a fresh agent of this category. */
+  defaultOctaves: [number, number];
+}
+
+/**
+ * The selectable sound palette per instrument category. Sourced from the sample
+ * names in `composer/persona-docs.ts` — when that doc changes, update this so
+ * the Builder form never offers a sound the model wasn't taught.
+ */
+export const SOUND_CATALOG: Record<PersonaInstrument, SoundCatalogEntry> = {
+  drums: {
+    sounds: ['bd', 'sd', 'hh', 'oh', 'cp', 'cb', 'rim', 'tom'],
+    banks: ['RolandTR909', 'RolandTR808', 'RolandTR707'],
+    hasOctaves: false,
+    octaveRange: [1, 6],
+    defaultOctaves: [2, 4],
+  },
+  bass: {
+    sounds: ['sawtooth', 'bass'],
+    hasOctaves: true,
+    octaveRange: [0, 3],
+    defaultOctaves: [1, 2],
+  },
+  keys: {
+    sounds: ['piano', 'rhodes', 'epiano'],
+    hasOctaves: true,
+    octaveRange: [2, 6],
+    defaultOctaves: [3, 5],
+  },
+  horns: {
+    sounds: ['gm_alto_sax', 'gm_trumpet'],
+    hasOctaves: true,
+    octaveRange: [3, 7],
+    defaultOctaves: [4, 6],
+  },
+};
+
+/** A fresh, unrestricted sound block for a new agent of `instrument`. */
+export function makeDefaultSound(instrument: PersonaInstrument): AgentSound {
+  const [low, high] = SOUND_CATALOG[instrument].defaultOctaves;
+  return { octaveLow: low, octaveHigh: high, sounds: [], density: 'medium' };
+}
+
+/**
+ * Turn an agent's sound rules into one concise guidance clause for the composer
+ * prompt, or `''` when nothing constrains the default. Kept short so it fits
+ * inside the per-agent `style` budget (server caps it at 500 chars).
+ */
+export function describeAgentRules(agent: BandAgent): string {
+  const s = agent.sound;
+  if (!s) return '';
+  const cat = SOUND_CATALOG[agent.instrument];
+  const parts: string[] = [];
+  if (s.sounds.length > 0) parts.push(`use only these sounds: ${s.sounds.join(', ')}`);
+  if (s.bank) parts.push(`drum kit ${s.bank}`);
+  if (cat.hasOctaves) parts.push(`stay within octaves ${s.octaveLow}–${s.octaveHigh}`);
+  if (s.density && s.density !== 'medium') parts.push(`${s.density} note density`);
+  if (parts.length === 0) return '';
+  return `Sound rules — ${parts.join('; ')}.`;
 }
 
 /** A user-definable scene/mood that puts a chosen set of agents on stage. */
@@ -69,6 +167,7 @@ export const DEFAULT_AGENTS: readonly BandAgent[] = [
     role: 'Rhythm Automaton',
     accent: '#ff2d6f',
     style: 'Tight, groovy drum programming with human feel — ghost notes and swing welcome.',
+    sound: { octaveLow: 2, octaveHigh: 4, sounds: [], density: 'medium' },
   },
   {
     id: 'abyss',
@@ -77,6 +176,7 @@ export const DEFAULT_AGENTS: readonly BandAgent[] = [
     role: 'Subsonic Leviathan',
     accent: '#2dd4ff',
     style: 'Deep monophonic bass lines that lock with the kick and stay out of the keys.',
+    sound: { octaveLow: 1, octaveHigh: 2, sounds: [], density: 'medium' },
   },
   {
     id: 'oracle',
@@ -85,6 +185,7 @@ export const DEFAULT_AGENTS: readonly BandAgent[] = [
     role: 'Holographic Keysmith',
     accent: '#39ff8b',
     style: 'Lush chordal comping in mid octaves — leaves space for the lead.',
+    sound: { octaveLow: 3, octaveHigh: 5, sounds: [], density: 'medium' },
   },
   {
     id: 'nova',
@@ -93,6 +194,7 @@ export const DEFAULT_AGENTS: readonly BandAgent[] = [
     role: 'Plasma Brass',
     accent: '#ffb454',
     style: 'Singable single-line melodies high in the register, with breathing room.',
+    sound: { octaveLow: 4, octaveHigh: 6, sounds: [], density: 'medium' },
   },
 ];
 
