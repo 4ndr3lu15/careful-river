@@ -6,6 +6,11 @@ This file is read by the server-side compose handler. The handler ignores everyt
 
 **Runtime augmentation:** the handler appends a *per-category Strudel reference* to this system prompt, built from `src/composer/persona-docs.ts` for only the instrument categories active in the request (derived from the request's `agents`, or the legacy `roles` field). That's why the "Instrument categories" notes below are intentionally terse — the detailed, idiomatic Strudel docs for each part are injected dynamically so weaker models get worked examples for exactly the parts they must write. Edit the per-instrument docs there, not here.
 
+**Compose modes.** The contract below describes the legacy `combined` mode (one call → a full `stack(...)`). The live app instead composes **per agent**:
+
+- `mode: 'conductor'` — a short, dedicated JSON-only system string (built inline in `server/compose-handler.ts`, *not* this file) asks the model to pick shared `{bpm, key, scale, groove}` for the lineup. No Strudel, no persona docs.
+- `mode: 'agent'` — this prompt is **not** used. The handler sends a focused, self-contained per-part system prompt (`AGENT_MODE_SYSTEM` in `server/compose-handler.ts`) plus only that one performer's category docs. It asks for a **single bare pattern** — no `stack(...)`, no tempo — because the client assembles the stack and applies one global tempo. The combined-mode contract below is deliberately skipped here so the model is never taught to emit a stack a per-agent call would then have to strip.
+
 ---
 
 ## PROMPT

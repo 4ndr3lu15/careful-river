@@ -22,7 +22,13 @@
  * without a recompose — part index = on-stage lineup order.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { compose, ComposeError, type DevOverride } from '../composer';
+import {
+  composeAgentPart,
+  composeConductor,
+  ComposeError,
+  type AgentSpec,
+  type DevOverride,
+} from '../composer';
 import { describeAgentRules, makeId, type BandAgent, type Vibe } from '../band';
 import { buildPlayable, errors, init, play, stop } from '../musician';
 import { defaultRoster, loadRoster, saveRoster, type Roster } from './roster-storage';
@@ -282,27 +288,63 @@ export function App() {
     if (!vibe || stageAgents.length === 0) return null;
     setStatus('composing');
     setError(null);
+    const override =
+      import.meta.env.DEV && isUsableOverride(devOverride) ? { devOverride } : {};
+    // One AgentSpec per on-stage agent, in stage order — each agent's `style`
+    // folded with its sound rules. Stage order IS the stack/part order that live
+    // per-agent muting relies on (part index = on-stage lineup index).
+    const specs: AgentSpec[] = stageAgents.map((agent) => {
+      const combined = [agent.style.trim(), describeAgentRules(agent)]
+        .filter(Boolean)
+        .join(' ')
+        .slice(0, 500);
+      return {
+        name: agent.name,
+        instrument: agent.instrument,
+        ...(combined ? { style: combined } : {}),
+      };
+    });
     try {
-      const result = await compose({
+      // 1. Conductor picks shared tempo/key/groove so the parts cohere.
+      const { shared, model: conductorModel } = await composeConductor({
         prompt: vibe.prompt,
-        agents: stageAgents.map((agent) => {
-          const combined = [agent.style.trim(), describeAgentRules(agent)]
-            .filter(Boolean)
-            .join(' ')
-            .slice(0, 500);
-          return {
-            name: agent.name,
-            instrument: agent.instrument,
-            ...(combined ? { style: combined } : {}),
-          };
-        }),
-        ...(import.meta.env.DEV && isUsableOverride(devOverride) ? { devOverride } : {}),
+        agents: specs,
+        ...override,
       });
-      setCode(result.code);
-      setModel(result.model);
+      // 2. Generate every part in parallel, given that shared context.
+      const settled = await Promise.allSettled(
+        specs.map((agent) =>
+          composeAgentPart({ prompt: vibe.prompt, agent, shared, ...override }),
+        ),
+      );
+      // 3. Assemble in stage order. A failed part becomes `silence` so the stack
+      //    keeps exactly one entry per agent and live-mute indices stay aligned.
+      const failed: string[] = [];
+      let model = conductorModel;
+      const parts = settled.map((result, i) => {
+        if (result.status === 'fulfilled') {
+          model = result.value.model;
+          return result.value.code.trim();
+        }
+        failed.push(specs[i].name);
+        return 'silence';
+      });
+      if (failed.length === specs.length) {
+        throw new ComposeError({
+          code: 'invalid_response',
+          message: 'Every performer failed to compose.',
+          retryable: true,
+        });
+      }
+      const assembled = `stack(\n  ${parts.join(',\n  ')}\n).cpm(${shared.bpm})`;
+      setCode(assembled);
+      setModel(model);
       setStatus('ready');
       setNeedsCompose(false);
-      return result.code;
+      setError(
+        failed.length ? `Some parts failed to compose: ${failed.join(', ')}.` : null,
+      );
+      return assembled;
     } catch (err) {
       const message =
         err instanceof ComposeError

@@ -34,6 +34,15 @@ const agentSpecSchema = z.object({
   style: z.string().trim().max(500).optional(),
 });
 
+/** Shared musical context produced by the conductor pass, threaded into every
+ * per-agent call so independently-generated parts stay coherent. */
+const sharedContextSchema = z.object({
+  bpm: z.number().finite().positive(),
+  key: z.string().trim().min(1),
+  scale: z.string().trim().min(1),
+  groove: z.string().trim().min(1),
+});
+
 const composeRequestSchema = z.object({
   prompt: z.string().trim().min(1),
   bpm: z.number().finite().positive().optional(),
@@ -42,6 +51,16 @@ const composeRequestSchema = z.object({
   devOverride: devOverrideSchema.optional(),
   agents: z.array(agentSpecSchema).max(16).optional(),
   roles: z.array(z.enum(PERSONA_INSTRUMENTS)).optional(),
+  /**
+   * Compose mode. Absent ⇒ 'combined' (legacy: one call → a full `stack(...)`).
+   * 'conductor' returns shared `{bpm,key,scale,groove}` for the lineup.
+   * 'agent' writes ONE bare part for `agent`, given `shared`.
+   */
+  mode: z.enum(['conductor', 'agent', 'combined']).optional(),
+  /** The single performer to write, in 'agent' mode. */
+  agent: agentSpecSchema.optional(),
+  /** Shared musical context from the conductor pass, in 'agent' mode. */
+  shared: sharedContextSchema.optional(),
 });
 
 const OPENROUTER_DEFAULT_MODEL = 'anthropic/claude-sonnet-4.6';
@@ -55,7 +74,48 @@ const REQUEST_TIMEOUT_MS = 30_000;
 // Strudel expression is only ~50–100 tokens, so the headroom is nearly free.
 const MAX_OUTPUT_TOKENS = 8192;
 
+/**
+ * Self-contained system prompt for 'agent' mode. Deliberately does NOT reuse the
+ * combined-mode base prompt: that prompt teaches the model to emit a full
+ * `stack(...).cpm(...)`, and three worked examples reinforce it — so a per-agent
+ * call would routinely return a stack, which the client then had to discard
+ * (silencing the part). This focused prompt only ever describes writing ONE bare
+ * part; the one performer's persona docs are appended after it.
+ */
+const AGENT_MODE_SYSTEM = `You compose for **Strudel**, a JavaScript live-coding
+music language. You write ONE instrument's part for a band. A host program stacks
+every performer's part together and applies a single global tempo, so you must
+return just your one part — never a stack, never a tempo. Reply with Strudel code
+ONLY: no prose, no markdown fences, no explanation.
+
+## Output contract (hard rules)
+
+1. Output a SINGLE Strudel expression — the part for the one performer described
+   in the user message, and nothing else.
+2. Do NOT wrap it in \`stack(...)\`. Do NOT call \`.cpm(...)\`, \`.cps(...)\`, or
+   \`setcpm(...)\` — the host owns the tempo.
+3. Use ONLY the sounds of the instrument category you are given. Never write
+   another instrument's part.
+4. Code runs via \`evaluate(code)\`: no \`play()\`/\`stop()\`, no imports, no
+   variable declarations. Use mini-notation in quotes (\`"c3 e3 g3"\`,
+   \`"bd ~ sd ~"\`); \`~\` is a rest.
+
+## Make it a real part, not a placeholder
+
+- Honour the shared **tempo, key/scale, and groove** stated in the user message
+  so your part locks with the rest of the band — same key, complementary rhythm.
+- Compose an evolving phrase of **at least 2–4 bars**: use \`<...>\` to cycle
+  variations across bars and \`.sometimes(...)\` / fills / accents for life. A
+  single repeated note or one static bar is too lazy — give the part shape,
+  motion, and dynamics.
+- Set a sensible \`.gain(...)\` so parts balance (drums ~0.7, bass ~0.7, keys
+  ~0.5, lead/horns ~0.6).
+
+The focused Strudel reference below is for YOUR instrument only — follow its
+per-part rules and adapt its idioms.`;
+
 type ComposeRequest = z.infer<typeof composeRequestSchema>;
+type SharedContext = z.infer<typeof sharedContextSchema>;
 type ComposeErrorCode =
   | 'invalid_request'
   | 'rate_limited'
@@ -129,13 +189,40 @@ export async function composeHandler(
     return;
   }
 
+  const mode = requestBody.mode ?? 'combined';
+
+  // The conductor pass writes no Strudel — it only decides shared musical
+  // parameters — so it skips the full composer prompt and the persona docs.
+  if (mode === 'conductor') {
+    await handleConductor(res, requestBody, languageModel, modelId);
+    return;
+  }
+
   let system: string;
   try {
-    const basePrompt = await loadSystemPrompt();
-    // Append focused Strudel docs for only the categories that will play. Weaker
-    // models lean on these worked examples; strong models ignore the redundancy.
-    const personaDocs = buildPersonaDocs(activeCategories(requestBody));
-    system = personaDocs ? `${basePrompt}\n\n${personaDocs}` : basePrompt;
+    if (mode === 'agent') {
+      if (!requestBody.agent) {
+        sendJson(res, 400, {
+          error: {
+            code: 'invalid_request',
+            message: 'agent mode requires an `agent`.',
+            retryable: false,
+          },
+        });
+        return;
+      }
+      // Focused, self-contained per-part prompt + ONLY this performer's category
+      // docs. We intentionally skip the combined-mode base prompt so the model is
+      // never told to emit a stack(...) it would then have to be stripped of.
+      const personaDocs = buildPersonaDocs([requestBody.agent.instrument]);
+      system = personaDocs ? `${AGENT_MODE_SYSTEM}\n\n${personaDocs}` : AGENT_MODE_SYSTEM;
+    } else {
+      // Append focused Strudel docs for only the categories that will play. Weaker
+      // models lean on these worked examples; strong models ignore the redundancy.
+      const basePrompt = await loadSystemPrompt();
+      const personaDocs = buildPersonaDocs(activeCategories(requestBody));
+      system = personaDocs ? `${basePrompt}\n\n${personaDocs}` : basePrompt;
+    }
   } catch (error) {
     sendJson(res, 500, {
       error: {
@@ -146,7 +233,7 @@ export async function composeHandler(
     });
     return;
   }
-  const prompt = buildUserPrompt(requestBody);
+  const prompt = mode === 'agent' ? buildAgentPrompt(requestBody) : buildUserPrompt(requestBody);
 
   const start = Date.now();
   const abortController = new AbortController();
@@ -353,6 +440,127 @@ function buildUserPrompt(request: ComposeRequest): string {
   }
 
   return parts.join('\n');
+}
+
+/**
+ * Conductor pass — pick shared musical parameters for the whole lineup so the
+ * independently-generated agent parts stay coherent. Writes no Strudel; returns
+ * `{ shared, model }`. Genuine provider errors surface (502); a bad/empty JSON
+ * reply falls back to a default so the compose flow never stalls on the leader.
+ */
+async function handleConductor(
+  res: ServerResponse,
+  request: ComposeRequest,
+  languageModel: LanguageModel,
+  modelId: string,
+): Promise<void> {
+  const system =
+    'You are the band leader. Read the brief and the lineup and choose the shared ' +
+    'musical foundation so every performer, written independently, locks together. ' +
+    'Reply with ONLY a JSON object: {"bpm":<integer 60-180>,"key":"<tonic, e.g. C, ' +
+    'F#, Bb>","scale":"<one of: major, minor, dorian, phrygian, lydian, mixolydian, ' +
+    'minor pentatonic, harmonic minor>","groove":"<2-3 sentences>"}. Pick a bpm, ' +
+    'key and scale that genuinely fit the brief\'s genre and mood. Make the groove ' +
+    'concrete: name the rhythmic feel (e.g. swung, four-on-the-floor, half-time, ' +
+    'syncopated), the energy/density, and how the parts should interlock — concrete ' +
+    'enough that separately-written parts will agree. No prose outside the JSON, no ' +
+    'code fences.';
+  const prompt = buildConductorPrompt(request);
+
+  const start = Date.now();
+  const abortController = new AbortController();
+  const timeout = setTimeout(() => abortController.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const result = await generateText({
+      model: languageModel,
+      system,
+      prompt,
+      maxOutputTokens: MAX_OUTPUT_TOKENS,
+      abortSignal: abortController.signal,
+    });
+    const shared = parseSharedContext(result.text, request);
+    console.log(
+      `[compose] conductor ${modelId} ok in ${Date.now() - start}ms ` +
+        `(bpm=${shared.bpm}, key=${shared.key} ${shared.scale})`,
+    );
+    sendJson(res, 200, { shared, model: modelId });
+  } catch (error) {
+    const mapped = mapComposeError(error);
+    console.error(
+      `[compose] conductor ${modelId} error in ${Date.now() - start}ms`,
+      error instanceof Error ? error.message : error,
+    );
+    sendJson(res, 502, { error: mapped });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function buildConductorPrompt(request: ComposeRequest): string {
+  const parts: string[] = [request.prompt.trim()];
+  if (typeof request.bpm === 'number') {
+    parts.push(`Requested BPM: ${clampBpm(request.bpm)}.`);
+  }
+  const lineup = (request.agents ?? []).map((a) => `- ${a.name} (${a.instrument})`);
+  if (lineup.length > 0) {
+    parts.push(`Lineup:\n${lineup.join('\n')}`);
+  }
+  parts.push('Choose a shared bpm, key, scale, and a one-sentence groove for this band.');
+  return parts.join('\n');
+}
+
+/** Per-agent user prompt: brief + shared context line + the one performer. */
+function buildAgentPrompt(request: ComposeRequest): string {
+  const agent = request.agent;
+  if (!agent) throw new Error('buildAgentPrompt called without an agent.');
+  const shared = request.shared ?? defaultSharedContext(request);
+  const style = agent.style?.trim();
+  return [
+    `Band brief: ${request.prompt.trim()}`,
+    `Shared foundation — tempo ${clampBpm(shared.bpm)} BPM, key ${shared.key} ${shared.scale}. ` +
+      `Groove: ${shared.groove}`,
+    `Write the ${agent.instrument} part for ${agent.name}${style ? ` — ${style}` : ''}.`,
+    `Compose an evolving 2-4 bar phrase in ${shared.key} ${shared.scale} that locks to that ` +
+      `groove and leaves room for the other players. Return only this performer's bare ` +
+      `pattern — no stack(), no tempo.`,
+  ].join('\n');
+}
+
+/** Salvage the JSON object from a conductor reply; default on anything unusable. */
+function parseSharedContext(text: string, request: ComposeRequest): SharedContext {
+  const json = extractJsonObject(text);
+  if (json) {
+    const parsed = sharedContextSchema.safeParse(json);
+    if (parsed.success) {
+      return { ...parsed.data, bpm: clampBpm(parsed.data.bpm) };
+    }
+  }
+  return defaultSharedContext(request);
+}
+
+function extractJsonObject(text: string): unknown {
+  const trimmed = text
+    .trim()
+    .replace(/^```[\w-]*\n?/, '')
+    .replace(/```$/, '')
+    .trim();
+  const open = trimmed.indexOf('{');
+  const close = trimmed.lastIndexOf('}');
+  if (open === -1 || close <= open) return null;
+  try {
+    return JSON.parse(trimmed.slice(open, close + 1));
+  } catch {
+    return null;
+  }
+}
+
+function defaultSharedContext(request: ComposeRequest): SharedContext {
+  return {
+    bpm: clampBpm(request.bpm ?? 110),
+    key: 'C',
+    scale: 'minor',
+    groove: 'steady mid-tempo',
+  };
 }
 
 function clampBpm(value: number): number {
