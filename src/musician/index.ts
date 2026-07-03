@@ -12,7 +12,7 @@
  * events are captured with a non-dominant `onTrigger` so the default webaudio
  * output still plays the note (see `handleTrigger`).
  */
-import { initStrudel, evaluate, hush, getAudioContext } from '@strudel/web';
+import { initStrudel, evaluate, hush, getAudioContext, samples } from '@strudel/web';
 import type { StrudelHap, StrudelValue } from '@strudel/web';
 import type { NoteEvent } from '../types';
 import { classifyInstrument } from './instrument-map';
@@ -43,13 +43,51 @@ export const errors: EventTarget = new EventTarget();
 let initPromise: Promise<void> | null = null;
 
 /**
- * Loads `@strudel/web` (pattern engine + default synth sounds). Idempotent:
- * the first call wins, later calls return the same promise. A cold load can
- * take 1–3 s, so call this at boot behind a visible loading state.
+ * Sample packs to register before any pattern plays.
+ *
+ * `@strudel/web`'s default prebake registers ONLY raw synth waveforms
+ * (`sine`/`sawtooth`/`square`/`triangle`) — its `registerSoundfonts()` is
+ * commented out and it loads no samples. So without this, every part except a
+ * `sawtooth` synth (our bass) is silent: drums, `piano`, and the `sax` lead all
+ * resolve to nothing. These are the same sources strudel.cc loads:
+ *   - `tidal-drum-machines` — drum kits addressed via `.bank("RolandTR909"…)`
+ *   - `EmuSP12` — bare drum names (`bd sd hh oh cp cb rim`) when no bank is set
+ *   - `piano` — the `piano` sound for the keys category
+ *   - `VCSL` — the `sax` sample used by the horns category
+ * The matching sound ids live in `musician/instrument-map.ts`,
+ * `composer/persona-docs.ts`, and `band.ts` (SOUND_CATALOG); keep them in sync.
+ */
+const SAMPLE_BASE = 'https://raw.githubusercontent.com/felixroos/dough-samples/main';
+const SAMPLE_PACKS: readonly string[] = [
+  `${SAMPLE_BASE}/tidal-drum-machines.json`,
+  `${SAMPLE_BASE}/EmuSP12.json`,
+  `${SAMPLE_BASE}/piano.json`,
+  `${SAMPLE_BASE}/vcsl.json`,
+];
+
+/**
+ * Loads `@strudel/web` (pattern engine + synth sounds) and registers the sample
+ * packs the band's instruments need. Idempotent: the first call wins, later
+ * calls return the same promise. A cold load can take 1–3 s (plus the sample
+ * manifests), so call this at boot behind a visible loading state.
  */
 export function init(): Promise<void> {
   initPromise ??= (async () => {
     await initStrudel({
+      // Runs after the default prebake. Sample audio is fetched lazily per sound
+      // on first use; here we only register the manifests. Best-effort: a pack
+      // that fails to fetch leaves its sounds silent rather than breaking audio
+      // for everything else (and never rejects init).
+      prebake: async () => {
+        const results = await Promise.allSettled(SAMPLE_PACKS.map((url) => samples(url)));
+        const failed = results.filter((r) => r.status === 'rejected').length;
+        if (failed > 0) {
+          console.warn(
+            `[musician] ${failed}/${SAMPLE_PACKS.length} sample packs failed to load — ` +
+              'some instruments may be silent. Check the network connection.',
+          );
+        }
+      },
       // Every evaluated pattern is wired with a NON-dominant onTrigger: the
       // default webaudio output still plays the note, and we additionally
       // observe each hap to emit a NoteEvent. See @strudel/core `getTrigger`.

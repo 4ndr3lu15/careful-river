@@ -94,26 +94,26 @@ export interface SoundCatalogEntry {
  */
 export const SOUND_CATALOG: Record<PersonaInstrument, SoundCatalogEntry> = {
   drums: {
-    sounds: ['bd', 'sd', 'hh', 'oh', 'cp', 'cb', 'rim', 'tom'],
+    sounds: ['bd', 'sd', 'hh', 'oh', 'cp', 'cb', 'rim'],
     banks: ['RolandTR909', 'RolandTR808', 'RolandTR707'],
     hasOctaves: false,
     octaveRange: [1, 6],
     defaultOctaves: [2, 4],
   },
   bass: {
-    sounds: ['sawtooth', 'bass'],
+    sounds: ['sawtooth'],
     hasOctaves: true,
     octaveRange: [0, 3],
     defaultOctaves: [1, 2],
   },
   keys: {
-    sounds: ['piano', 'rhodes', 'epiano'],
+    sounds: ['piano', 'fmpiano'],
     hasOctaves: true,
     octaveRange: [2, 6],
     defaultOctaves: [3, 5],
   },
   horns: {
-    sounds: ['gm_alto_sax', 'gm_trumpet'],
+    sounds: ['sax'],
     hasOctaves: true,
     octaveRange: [3, 7],
     defaultOctaves: [4, 6],

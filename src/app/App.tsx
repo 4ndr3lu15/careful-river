@@ -26,6 +26,7 @@ import {
   composeAgentPart,
   composeConductor,
   ComposeError,
+  fallbackPart,
   type AgentSpec,
   type DevOverride,
 } from '../composer';
@@ -317,32 +318,37 @@ export function App() {
           composeAgentPart({ prompt: vibe.prompt, agent, shared, ...override }),
         ),
       );
-      // 3. Assemble in stage order. A failed part becomes `silence` so the stack
-      //    keeps exactly one entry per agent and live-mute indices stay aligned.
+      // 3. Assemble in stage order. A part the model failed to produce degrades
+      //    to a safe default for that category (not silence), so its character
+      //    still plays and animates and the stack keeps exactly one entry per
+      //    agent (live-mute indices stay aligned). We never block the whole
+      //    performance on flaky parts: the conductor already proved the model is
+      //    reachable, so the user can always test the stage — we just flag which
+      //    parts fell back, and the first reason why.
       const failed: string[] = [];
-      let model = conductorModel;
+      let firstReason: string | null = null;
+      let usedModel = conductorModel;
       const parts = settled.map((result, i) => {
         if (result.status === 'fulfilled') {
-          model = result.value.model;
+          usedModel = result.value.model;
           return result.value.code.trim();
         }
         failed.push(specs[i].name);
-        return 'silence';
+        firstReason ??=
+          result.reason instanceof ComposeError ? result.reason.message : 'unknown error';
+        return fallbackPart(specs[i].instrument);
       });
-      if (failed.length === specs.length) {
-        throw new ComposeError({
-          code: 'invalid_response',
-          message: 'Every performer failed to compose.',
-          retryable: true,
-        });
-      }
       const assembled = `stack(\n  ${parts.join(',\n  ')}\n).cpm(${shared.bpm})`;
       setCode(assembled);
-      setModel(model);
+      setModel(usedModel);
       setStatus('ready');
       setNeedsCompose(false);
       setError(
-        failed.length ? `Some parts failed to compose: ${failed.join(', ')}.` : null,
+        failed.length === 0
+          ? null
+          : failed.length === specs.length
+            ? `The model returned no usable parts — playing a fallback arrangement so you can still test. Reason: ${firstReason}.`
+            : `Used a fallback for ${failed.join(', ')} — ${firstReason}.`,
       );
       return assembled;
     } catch (err) {

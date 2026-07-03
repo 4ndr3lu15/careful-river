@@ -29,10 +29,13 @@ export const INSTRUMENT_MAP: Record<string, Instrument> = {
   sawtooth: 'bass',
   // keys
   piano: 'keys',
+  piano1: 'keys',
+  fmpiano: 'keys',
   rhodes: 'keys',
   epiano: 'keys',
   // horns
   sax: 'horns',
+  saxello: 'horns',
   trumpet: 'horns',
   gm_alto_sax: 'horns',
   gm_trumpet: 'horns',

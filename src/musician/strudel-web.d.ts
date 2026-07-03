@@ -70,4 +70,11 @@ declare module '@strudel/web' {
   export function hush(): void;
   /** Returns the shared Web Audio context (created lazily, suspended). */
   export function getAudioContext(): AudioContext;
+  /**
+   * Registers a sample pack so its sounds become playable. `source` is a strudel
+   * sample-map URL (a `*.json` with a `_base`) or a `github:user/repo` shorthand.
+   * Resolves when the manifest is fetched; the audio itself loads lazily per
+   * sound on first use.
+   */
+  export function samples(source: string): Promise<void>;
 }

@@ -32,21 +32,15 @@ Your reply must be **only the Strudel code**. No explanations. No markdown fence
 
 ## Instruments available (use these ids inside `.s(...)`)
 
-**Drums (internal category: drums):**
-- `bd` = bass drum / kick
-- `sd` = snare drum
-- `hh` = closed hi-hat
-- `oh` = open hi-hat
-- `cp` = clap
-- `cb` = cowbell
+**Drums (internal category: drums):** `bd` kick, `sd` snare, `hh` closed hi-hat, `oh` open hi-hat, `cp` clap, `cb` cowbell, `rim` rimshot. Pick a kit with `.bank("RolandTR909")` / `"RolandTR808"` / `"RolandTR707"`.
 
-**Bass (internal category: bass):** prefer `note(...).s("sawtooth")` or `s("bass")` if available, with low octaves (C2–C3).
+**Bass (internal category: bass):** `note(...).s("sawtooth")` only, with low octaves (C1–C2).
 
-**Keys (internal category: keys):** `s("piano")`, `s("rhodes")`, `s("epiano")`. Chords via `note("[c3,e3,g3]")`.
+**Keys (internal category: keys):** `s("piano")` (acoustic) or `s("fmpiano")` (electric). Chords via `note("[c3,e3,g3]")`.
 
-**Horns (internal category: horns):** default Strudel doesn't ship realistic sax/trumpet. Use `s("gm_alto_sax")` or `s("gm_trumpet")` if available, otherwise fall back to `s("sawtooth")` with a short envelope.
+**Horns (internal category: horns):** `s("sax")` — a sampled saxophone for the lead.
 
-If none of the specialty timbres seem available, prefer `s("sine")`, `s("sawtooth")`, `s("triangle")` with `.note(...)` — those always work.
+Only the sounds listed above are loaded at runtime; an unlisted sample name produces NO audio (silence), so do not invent sample names. The synth waveforms `sine`/`sawtooth`/`square`/`triangle` also exist, but only `sawtooth` animates a character (the bass) — avoid the others except as brief effects.
 
 ## Performers (who plays what on stage)
 
@@ -58,10 +52,10 @@ just flavour.
 
 | Category | Plays with |
 |---|---|
-| `drums` | `bd sd hh oh cp cb` (optionally `.bank(...)`) |
-| `bass` | low `note(...)` on `sawtooth`/`bass`, octaves C2–C3 |
-| `keys` | `piano` / `rhodes` / `epiano` chords |
-| `horns` | `gm_alto_sax` / `gm_trumpet`, else `sawtooth` lead |
+| `drums` | `bd sd hh oh cp cb rim` (with `.bank("RolandTR909"…)`) |
+| `bass` | low `note(...).s("sawtooth")`, octaves C1–C2 |
+| `keys` | `piano` / `fmpiano` chords |
+| `horns` | `sax` lead |
 
 ### Honoring "Active performers"
 
@@ -92,7 +86,7 @@ stack(
   s("bd ~ sd ~").bank("RolandTR909"),                    // drums
   note("<c2 g2 a2 f2>").s("sawtooth").gain(0.7),         // bass
   note("<c4 e4 g4>").s("piano").gain(0.5),               // keys
-  note("c5 ~ e5 ~").s("sine").gain(0.4)                  // melody / horns
+  note("c5 ~ e5 ~").s("sax").gain(0.4)                   // melody / horns
 ).cpm(<bpm>)
 ```
 
@@ -141,7 +135,7 @@ stack(
 stack(
   s("bd ~ sd ~, hh*8").bank("RolandTR909").gain(0.7),
   note("<c2 c2 eb2 c2 g2 c2 bb1 c2>").s("sawtooth").gain(0.7).lpf(800),
-  note("<[c4,eb4,g4] ~ [c4,eb4,g4] ~>").s("rhodes").gain(0.5)
+  note("<[c4,eb4,g4] ~ [c4,eb4,g4] ~>").s("fmpiano").gain(0.5)
 ).cpm(115)
 ```
 
@@ -149,9 +143,9 @@ stack(
 
 ```
 stack(
-  note("<c3 g3 e3 a3>").s("sine").gain(0.4).slow(4).room(0.8),
-  note("<[c4,e4,g4] [d4,f4,a4]>").s("triangle").gain(0.3).slow(8).room(0.9),
-  note("c5").s("sine").gain(0.2).slow(16).room(0.95)
+  note("<c2 g2>").s("sawtooth").lpf(300).gain(0.5).slow(2),
+  note("<[c3,e3,g3] [d3,f3,a3]>").s("piano").gain(0.3).slow(4).room(0.8),
+  note("c5 ~ g5 ~").s("sax").gain(0.3).slow(2).room(0.6)
 ).cpm(60)
 ```
 

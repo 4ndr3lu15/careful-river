@@ -106,8 +106,6 @@ const errorResponseSchema = z.object({
   }),
 });
 
-const strudelTokens = ['note(', 's(', 'stack(', 'seq(', 'cat('];
-
 /** POST to /api/compose, mapping HTTP/error payloads to ComposeError. */
 async function postCompose(body: unknown): Promise<unknown> {
   const response = await fetch('/api/compose', {
@@ -232,6 +230,24 @@ export async function composeAgentPart(request: {
 }
 
 /**
+ * A safe, on-character default part per instrument category. Used when a
+ * per-agent compose call fails so the performer still plays and animates —
+ * each sound name is in `musician/instrument-map.ts`, so the right character
+ * moves — instead of going silent. Bare pattern (no stack, no tempo), matching
+ * the {@link composeAgentPart} contract so it drops straight into the stack.
+ */
+const FALLBACK_PARTS: Record<AgentSpec['instrument'], string> = {
+  drums: 's("bd ~ sd ~, hh*8").bank("RolandTR909").gain(0.7)',
+  bass: 'note("<c2 g2 a2 f2>").s("sawtooth").lpf(600).gain(0.7)',
+  keys: 'note("<[c3,e3,g3] [a2,c3,e3] [f2,a2,c3] [g2,b2,d3]>").s("piano").gain(0.5)',
+  horns: 'note("c5 ~ e5 g5 ~ e5").s("sax").gain(0.6)',
+};
+
+export function fallbackPart(instrument: AgentSpec['instrument']): string {
+  return FALLBACK_PARTS[instrument];
+}
+
+/**
  * Remove host-controlled tempo calls (`.cpm(...)`, `.cps(...)`, `setcpm(...)`)
  * from a per-agent part so it can't fight the single global tempo the host
  * applies when it wraps all parts in one `stack(...).cpm(bpm)`.
@@ -256,7 +272,18 @@ function stripCodeFences(value: string): string {
   return trimmed;
 }
 
+/**
+ * Cheap gate: is this a Strudel pattern rather than prose or a refusal? A real
+ * part makes at least one pattern call with a quoted argument — `note("…")`,
+ * `s("…")`, `n("…")`, `sound("…")`, `arp("…")`, `"…".s("…")`, … — so we look
+ * for that shape instead of allow-listing a handful of call names. The old
+ * allow-list rejected valid idioms like `n("0 3").scale(…).sound(…)` and
+ * `sound("bd*4")`, which silenced whole performers. Explicit `silence` passes
+ * so a deliberate rest is never mistaken for junk.
+ */
 function looksLikeStrudel(value: string): boolean {
-  const lowered = value.toLowerCase();
-  return strudelTokens.some((token) => lowered.includes(token));
+  const code = value.trim();
+  if (!code) return false;
+  if (/\bsilence\b/.test(code)) return true;
+  return /[A-Za-z_$][\w$]*\s*\(\s*["'`]/.test(code);
 }

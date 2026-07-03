@@ -41,15 +41,19 @@ This file is **not** automatically fed to the LLM in POC-1 — the system prompt
 | `delay(0.3)` | delay amount |
 | `pan(0.5)` | stereo position (0 = left, 1 = right) |
 
-## Sample names that ship with Strudel by default
+## Sample names available in this app
 
-**Drums (always present):** `bd`, `sd`, `hh`, `oh`, `cp`, `cb`, `rim`, `tom`.
+`@strudel/web`'s `initStrudel()` registers ONLY the synth waveforms below by default — no drums, no piano, no soundfonts (its `registerSoundfonts()` is commented out). This app therefore loads sample packs in `src/musician/index.ts` (`init()` → `prebake`). These are the names that actually produce audio:
 
-**Common synth shapes:** `sine`, `sawtooth`, `triangle`, `square`.
+**Synth waveforms (always, from `registerSynthSounds`):** `sine`, `sawtooth`, `square`, `triangle`. Only `sawtooth` is mapped to a stage character (the bass).
 
-**Instruments (varies; use defensively):** `piano`, `rhodes`, `epiano`, `bass`, `gm_alto_sax`, `gm_trumpet`.
+**Drums (loaded: EmuSP12 + tidal-drum-machines):** `bd`, `sd`, `hh`, `oh`, `cp`, `cb`, `rim` — bare, or kitted with `.bank("RolandTR909" | "RolandTR808" | "RolandTR707")`.
 
-If a name doesn't exist, Strudel silently falls back to a synth — useful for safety, terrible for debugging musical results. The system prompt explicitly steers the model to "safe" timbres on ambiguous requests.
+**Keys (loaded: dough-samples piano + VCSL):** `piano`, `fmpiano`.
+
+**Horns (loaded: VCSL):** `sax`.
+
+A name that isn't loaded produces **silence**, not a synth fallback. Don't invent sample names. To add a timbre: register its pack in `init()` AND map its name in `musician/instrument-map.ts` (otherwise the right character won't animate).
 
 ## Where Strudel diverges from TidalCycles
 
@@ -65,7 +69,7 @@ If a name doesn't exist, Strudel silently falls back to a synth — useful for s
 3. **Uses `setCpm` (camelCase)** — wrong, it's `.cpm(N)` as a chain method.
 4. **Imports** — `import { stack } from '@strudel/core'` — banned, runs already-imported.
 5. **Multi-line const declarations** — `const drums = ...; const bass = ...; stack(drums, bass)` — not a single expression. Banned but slips through.
-6. **Random sample names** — invents `s("trumpet_loud")`. Falls back to a synth silently.
+6. **Random sample names** — invents `s("trumpet_loud")`. Not loaded ⇒ plays nothing (silence). Stick to the names in "Sample names available in this app".
 
 When you see one of these, add it to the "Edge cases" section of the system prompt and to the validator skill (`.claude/skills/strudel-validator/SKILL.md`).
 

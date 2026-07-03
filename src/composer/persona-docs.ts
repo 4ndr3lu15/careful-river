@@ -35,7 +35,7 @@ const PERSONA_DOCS: Record<PersonaInstrument, PersonaDoc> = {
   drums: {
     role: 'percussion — the only part that uses bare `s(...)`, never `note(...)`',
     body: `
-**Sounds (drum samples, use inside \`s("...")\`):** \`bd\` kick, \`sd\` snare, \`hh\` closed hat, \`oh\` open hat, \`cp\` clap, \`cb\` cowbell, \`rim\` rimshot, \`tom\` tom.
+**Sounds (drum samples, use inside \`s("...")\`):** \`bd\` kick, \`sd\` snare, \`hh\` closed hat, \`oh\` open hat, \`cp\` clap, \`cb\` cowbell, \`rim\` rimshot.
 
 **Pick a kit** with \`.bank(...)\`: \`"RolandTR909"\` (house/techno), \`"RolandTR808"\` (hip-hop/trap), \`"RolandTR707"\` (clean pop). One \`.bank(...)\` applies to the whole pattern.
 
@@ -51,7 +51,7 @@ const PERSONA_DOCS: Record<PersonaInstrument, PersonaDoc> = {
   bass: {
     role: 'low end — one note at a time, deep octaves',
     body: `
-**Sound:** \`note("...").s("sawtooth")\` is the safe default (always available). \`s("bass")\` if you want a rounder tone. Tame the buzz with \`.lpf(400)\`–\`.lpf(900)\`.
+**Sound:** \`note("...").s("sawtooth")\` is the only bass timbre the stage recognises. Tame the buzz with \`.lpf(400)\`–\`.lpf(900)\`.
 
 **Octaves:** stay LOW — C1–C2 for the root, occasionally up to C3. Example pitches: \`c1 e1 g1 c2 g2 a2 f2\`.
 
@@ -61,37 +61,37 @@ const PERSONA_DOCS: Record<PersonaInstrument, PersonaDoc> = {
 - Walking line (jazz): \`note("c2 e2 g2 a2 g2 e2 d2 b1").s("sawtooth").lpf(800).gain(0.6)\`
 - Deep sub for electronic: \`note("<c1 c1 eb1 g1>").s("sawtooth").lpf(300).gain(0.8)\`
 
-**Rules for this part:** monophonic — one pitch per step, no chords (no commas inside the brackets). Always wrap pitches in \`note(...)\`; \`s(...)\` alone gives a drum sound. Use only \`s("sawtooth")\` or \`s("bass")\` — other synths (\`sine\`, \`triangle\`) make the wrong character move on stage. Keep it low and out of the keys' register.`,
+**Rules for this part:** monophonic — one pitch per step, no chords (no commas inside the brackets). Always wrap pitches in \`note(...)\`; \`s(...)\` alone gives a drum sound. Use ONLY \`s("sawtooth")\` — other synths (\`sine\`, \`triangle\`, \`square\`) make the wrong character move on stage. Keep it low and out of the keys' register.`,
   },
   keys: {
     role: 'harmony — chords and comping',
     body: `
-**Sounds:** \`s("piano")\`, \`s("rhodes")\`, or \`s("epiano")\`. Pattern is always \`note("...").s("piano")\`.
+**Sounds:** \`s("piano")\` (acoustic) or \`s("fmpiano")\` (electric-piano tone). Pattern is always \`note("...").s("piano")\`.
 
 **Chords = commas inside square brackets:** \`note("[c3,e3,g3]")\` plays C-E-G together. A 7th chord: \`note("[c3,e3,g3,b3]")\`. Use mid octaves (C3–C5) so you sit above the bass and below the horns.
 
 **Idioms:**
 - Chord progression (one chord per bar): \`note("<[c3,e3,g3] [a2,c3,e3] [f2,a2,c3] [g2,b2,d3]>").s("piano").gain(0.5)\`
-- Rhodes comping with rests: \`note("[c3,e3,g3] ~ [c3,e3,g3] ~").s("rhodes").gain(0.5)\`
-- Jazzy 7ths: \`note("<[c3,e3,g3,b3] [d3,f3,a3,c4]>").s("epiano").gain(0.45)\`
+- Rhodes comping with rests: \`note("[c3,e3,g3] ~ [c3,e3,g3] ~").s("fmpiano").gain(0.5)\`
+- Jazzy 7ths: \`note("<[c3,e3,g3,b3] [d3,f3,a3,c4]>").s("fmpiano").gain(0.45)\`
 - Add space/air with \`.room(0.3)\`.
 
-**Rules for this part:** chords use COMMAS inside \`[...]\` (\`[c3,e3,g3]\`); a space (\`[c3 e3 g3]\`) is an arpeggio, not a chord. Always \`note(...)\`, gain ~\`0.5\` so chords don't mask the melody.`,
+**Rules for this part:** chords use COMMAS inside \`[...]\` (\`[c3,e3,g3]\`); a space (\`[c3 e3 g3]\`) is an arpeggio, not a chord. Use ONLY \`s("piano")\` or \`s("fmpiano")\`. Always \`note(...)\`, gain ~\`0.5\` so chords don't mask the melody.`,
   },
   horns: {
     role: 'lead / melody — single-line, leaves space',
     body: `
-**Sounds:** ALWAYS use \`s("gm_alto_sax")\` or \`s("gm_trumpet")\`. If the soundfont isn't loaded Strudel silently swaps a synth for the *audio*, but the \`gm_*\` name is what tells the stage this is the brass performer — so keep the name even when you want a synthier tone, and shape it with \`.attack(0.02).release(0.2)\`. Do NOT write \`s("sawtooth")\`/\`s("triangle")\` here: those make the bass or no character move instead of the horn.
+**Sound:** ALWAYS \`s("sax")\` — a sampled saxophone, and the name that tells the stage this is the brass performer. Shape it with \`.attack(0.02).release(0.2)\` for a softer or punchier tone. Do NOT write \`s("sawtooth")\`/\`s("triangle")\` here: those make the bass or no character move instead of the horn.
 
 **Register:** sing ABOVE the keys — C4–C6.
 
 **Idioms:**
-- Singable motif with rests: \`note("c5 ~ e5 g5 ~ e5").s("gm_alto_sax").gain(0.6)\`
-- Call-and-response cycle: \`note("<[c5 e5 g5] [g5 e5 c5]>").s("gm_trumpet").gain(0.6)\`
-- Synthier lead (still classifies as horns): \`note("c5 e5 g5 e5").s("gm_alto_sax").attack(0.02).release(0.2).gain(0.5)\`
+- Singable motif with rests: \`note("c5 ~ e5 g5 ~ e5").s("sax").gain(0.6)\`
+- Call-and-response cycle: \`note("<[c5 e5 g5] [g5 e5 c5]>").s("sax").gain(0.6)\`
+- Softer lead: \`note("c5 e5 g5 e5").s("sax").attack(0.02).release(0.2).gain(0.5)\`
 - Add motion with \`.sometimes(x => x.add(note(12)))\` (octave jumps) sparingly.
 
-**Rules for this part:** monophonic lead — one note at a time, no chords. Leave rests (\`~\`); a horn that never breathes sounds robotic. Stay in a high register so it cuts through.`,
+**Rules for this part:** monophonic lead — one note at a time, no chords. Use ONLY \`s("sax")\`. Leave rests (\`~\`); a horn that never breathes sounds robotic. Stay in a high register so it cuts through.`,
   },
 };
 
